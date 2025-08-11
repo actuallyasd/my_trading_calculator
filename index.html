@@ -42,8 +42,27 @@
         /* Readability fix for inputs and results */
         [data-theme='dark'] .input-field input { background-color: #374151; color: white; border-color: #4b5563; }
         [data-theme='light'] .input-field input { background-color: #ffffff; color: #1f2937; border-color: #d1d5db; }
-        [data-theme='dark'] .result-field > div { background-color: #4b5563; color: white; border-color: #6b7280; }
-        [data-theme='light'] .result-field > div { background-color: #e5e7eb; color: #1f2937; border-color: #d1d5db; }
+        /* ----- UPDATED OUTPUT BOX STYLES FOR iOS-INSPIRED LOOK ----- */
+        [data-theme='dark'] .result-field > div { 
+            background-color: #374151; /* Deeper gray for dark theme */
+            color: #f9fafb; 
+            border: 1px solid #4b5563; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* Subtle dark shadow */
+            transition: all 0.2s ease;
+        }
+        [data-theme='light'] .result-field > div { 
+            background-color: #f9fafb; /* Lighter background for light theme */
+            color: #1f2937; 
+            border: 1px solid #e5e7eb; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* Subtle light shadow */
+            transition: all 0.2s ease;
+        }
+        /* Common styles for result fields */
+        .result-field > div { 
+            border-radius: 0.75rem; /* More rounded corners */
+        }
+        /* ----------------------------------------------------------- */
+        
         .tab-content > div { border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06); }
 
         /* Theme-specific sheet colors (unchanged) */
@@ -183,62 +202,6 @@
         /* theme toggle quick style */
         #theme-toggle { border-radius: 9999px; padding: 0.5rem; }
     </style>
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, deleteDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // This is a global object to hold our Firebase instances
-        window.firebase = {
-            app: null,
-            auth: null,
-            db: null
-        };
-        window.firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // Initialize Firebase on window load
-        window.onload = async () => {
-            if (Object.keys(window.firebaseConfig).length) {
-                window.firebase.app = initializeApp(window.firebaseConfig);
-                window.firebase.db = getFirestore(window.firebase.app);
-                window.firebase.auth = getAuth(window.firebase.app);
-
-                // Sign in the user using the custom token or anonymously
-                try {
-                    if (window.initialAuthToken) {
-                        await signInWithCustomToken(window.firebase.auth, window.initialAuthToken);
-                    } else {
-                        await signInAnonymously(window.firebase.auth);
-                    }
-                } catch (error) {
-                    console.error("Firebase Auth error:", error);
-                }
-
-                // Listen for auth state changes and set up Firestore listeners
-                onAuthStateChanged(window.firebase.auth, (user) => {
-                    if (user) {
-                        console.log("User signed in:", user.uid);
-                        window.app.state.userId = user.uid;
-                        window.app.setupFirestoreListeners();
-                        // Re-render the current tab to use the authenticated user data
-                        window.app.renderSheet(window.app.state.activeSheet);
-                    } else {
-                        console.log("User is signed out.");
-                        window.app.state.userId = crypto.randomUUID(); // Fallback for unauthenticated users
-                        window.app.setupFirestoreListeners();
-                        // Re-render to use the anonymous user data
-                        window.app.renderSheet(window.app.state.activeSheet);
-                    }
-                });
-            } else {
-                console.warn("Firebase config is missing. Firestore will not be used.");
-                window.app.setupFirestoreListeners(); // Still need to call this to run local storage logic
-                window.app.state.userId = crypto.randomUUID();
-            }
-        };
-    </script>
 </head>
 
 <body class="bg-body min-h-screen p-4 sm:p-8 flex flex-col items-center font-sans transition-colors duration-300" data-theme="dark">
@@ -342,12 +305,6 @@
                 calculations: [],
                 notes: "",
                 userId: null,
-                isAuthReady: false,
-                appId: typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'
-            },
-            firebase: {
-                db: null,
-                auth: null
             },
         };
 
@@ -378,11 +335,29 @@
             </div>
         `;
         const renderResultField = (label, id) => `
-            <div class="result-field bg-gray-200 dark:bg-gray-700 p-3 rounded-md shadow-inner">
+            <div class="result-field p-3">
                 <div class="text-xs font-semibold uppercase text-secondary">${label}</div>
                 <div id="${id}" class="text-xl font-bold mt-1 text-main">-</div>
             </div>
         `;
+
+        // Local Storage Functions
+        const saveToLocalStorage = () => {
+            localStorage.setItem('calculations', JSON.stringify(window.app.state.calculations));
+            localStorage.setItem('notes', window.app.state.notes);
+            // We don't need a success message every time the user types.
+        };
+
+        const loadFromLocalStorage = () => {
+            const savedCalculations = localStorage.getItem('calculations');
+            const savedNotes = localStorage.getItem('notes');
+            if (savedCalculations) {
+                window.app.state.calculations = JSON.parse(savedCalculations);
+            }
+            if (savedNotes) {
+                window.app.state.notes = savedNotes;
+            }
+        };
 
         // Sheet Definitions with new render functions
         const sheets = {
@@ -574,436 +549,392 @@
 
                     document.getElementById('pandavas-avg1').textContent = !isNaN(avg1) ? avg1.toFixed(2) : '-';
                     document.getElementById('pandavas-avg2').textContent = !isNaN(avg2) ? avg2.toFixed(2) : '-';
-                    return { inputs: { values1, values2 }, results: { avg1, avg2 } };
+                    
+                    if (!isNaN(avg1) && !isNaN(avg2)) {
+                        return { inputs: { values1, values2 }, results: { avg1, avg2 } };
+                    } else {
+                        return null;
+                    }
                 }
             },
             History: {
-                title: "Calculation History",
+                title: "Saved History",
                 class: "history",
-                fields: [], // No static fields
-                calculate: () => null // No calculation needed here
+                fields: [],
+                calculate: () => {}, // No calculation for this sheet
             },
             Notes: {
-                title: "My Trading Notes",
+                title: "Notes",
                 class: "notes",
-                fields: [], // No static fields
-                calculate: () => null // No calculation needed here
+                fields: [],
+                calculate: () => {}, // No calculation for this sheet
             }
         };
 
-        // Renders the UI for a given sheet
-        window.app.renderSheet = (sheetName) => {
+        const generateSheetHTML = (sheetName) => {
             const sheet = sheets[sheetName];
-            const contentDiv = document.getElementById('sheet-content');
+            const isInputSheet = ['Umbrella', 'Bike', 'Rikshaw', 'Car', 'Pandavas'].includes(sheetName);
+            let html = `
+                <div class="tab-content bg-${sheet.class} bg-opacity-20 p-6 rounded-lg transition-colors duration-300">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6 text-${sheet.class}">${sheet.title}</h2>
+            `;
 
-            // Render different content based on the sheet type
-            let innerContent = "";
-            if (sheetName === 'History') {
-                innerContent = `
-                    <div class="bg-container p-6 sm:p-8 rounded-lg min-h-[400px]">
-                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-main mb-4 sm:mb-0">Calculation History</h2>
-                            <div class="flex flex-wrap justify-center gap-2">
-                                <button id="history-export-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-file-csv"></i> Export as CSV
-                                </button>
-                                <button id="history-copy-clipboard-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-copy"></i> Copy to Clipboard
-                                </button>
-                                <button id="history-clear-all-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-trash-alt"></i> Clear All
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mt-4 history-table-container bg-container rounded-lg p-2">
-                            <table class="min-w-full divide-y divide-gray-700">
-                                <thead class="bg-container sticky top-0">
-                                    <tr>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Date</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Rule</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Values</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Results</th>
-                                        <th class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="history-list" class="divide-y divide-gray-700 text-sm">
-                                    ${window.app.state.calculations.length > 0 ?
-                                        window.app.state.calculations.map(calc => `
-                                            <tr class="history-item hover:bg-gray-800 transition-colors" data-id="${calc.id}">
-                                                <td class="px-3 py-2 whitespace-nowrap text-secondary">${new Date(calc.timestamp.seconds * 1000).toLocaleString()}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap font-medium text-main">${calc.sheet}</td>
-                                                <td class="px-3 py-2 whitespace-pre-wrap text-secondary">${Object.entries(calc.inputs).map(([key, val]) => `${key}: ${val}`).join(', ')}</td>
-                                                <td class="px-3 py-2 whitespace-pre-wrap text-secondary">${Object.entries(calc.results).map(([key, val]) => `${key}: ${val ? val.toFixed(2) : '-'}`).join(', ')}</td>
-                                                <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button class="history-delete-button text-red-500 hover:text-red-700" data-id="${calc.id}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')
-                                    : `<tr class="text-center"><td colspan="5" class="py-4 text-secondary">No saved calculations yet.</td></tr>`}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-4 text-center text-sm text-secondary">
-                          Your userId: <span class="font-mono text-xs text-blue-400">${window.app.state.userId || 'Loading...'}</span>
-                        </div>
-                    </div>
-                `;
-            } else if (sheetName === 'Notes') {
-                innerContent = `
-                    <div class="bg-notes p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-notes">My Trading Notes</h2>
-                        <textarea id="notes-textarea" class="w-full h-80 p-4 rounded-md shadow-sm border border-gray-300 bg-white text-gray-800 resize-y focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-                `;
-            } else {
-                let fieldsHtml = sheet.fields.map(field => {
-                    if (field.type === 'input') return renderInputField(field.label, field.id);
-                    if (field.type === 'result') return renderResultField(field.label, field.id);
-                }).join('');
+            if (isInputSheet) {
+                html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+                const inputFields = sheet.fields.filter(f => f.type === 'input');
+                const resultFields = sheet.fields.filter(f => f.type === 'result');
 
-                innerContent = `
-                    <div class="bg-${sheet.class} p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-${sheet.class}">${sheet.title}</h2>
-                        ${sheetName === 'Car' ? `<p class="text-secondary mb-4">This rule calculates the midpoint and a percentage range for your trading points.</p>` : ''}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            ${fieldsHtml}
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
+                // Inputs side
+                html += '<div class="flex flex-col gap-4">';
+                inputFields.forEach(field => {
+                    html += renderInputField(field.label, field.id);
+                });
+                html += `<button id="save-calculation" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 mt-4">
+                            <i class="fas fa-save mr-2"></i> Save Calculation
+                         </button>`;
+                html += '</div>';
 
-            contentDiv.innerHTML = innerContent;
-            
-            // Re-attach event listeners for the newly rendered content
-            if (sheetName === 'Notes') {
-                const notesTextarea = document.getElementById('notes-textarea');
-                notesTextarea.value = window.app.state.notes;
-                notesTextarea.addEventListener('input', debounce(() => {
-                    if (window.app.firebase.db && window.app.state.userId) {
-                        saveNotesToFirestore(notesTextarea.value);
-                    }
-                }, 500));
+                // Results side
+                html += '<div class="grid grid-cols-1 gap-4">';
+                resultFields.forEach(field => {
+                    html += renderResultField(field.label, field.id);
+                });
+                html += '</div>';
+                
+                html += '</div>';
             } else if (sheetName === 'History') {
-                document.getElementById('history-export-csv-button').addEventListener('click', exportToCSV);
-                document.getElementById('history-copy-clipboard-button').addEventListener('click', copyToClipboard);
-                document.getElementById('history-clear-all-button').addEventListener('click', clearAllHistory);
-                document.querySelectorAll('.history-delete-button').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const docId = e.currentTarget.dataset.id;
-                        deleteCalculationFromFirestore(docId);
-                    });
-                });
+                html += renderHistorySheet();
+            } else if (sheetName === 'Notes') {
+                html += renderNotesSheet();
+            }
+
+            html += `</div>`;
+            return html;
+        };
+
+        const renderHistorySheet = () => {
+            let historyHtml = `
+                <div class="space-y-4">
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <button id="clear-history" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+                            <i class="fas fa-trash-alt"></i> Clear All History
+                        </button>
+                        <button id="copy-history" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+                            <i class="fas fa-copy"></i> Copy as CSV
+                        </button>
+                        <button id="export-history" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+                            <i class="fas fa-file-csv"></i> Export as CSV
+                        </button>
+                    </div>
+                    <div id="history-table-container" class="history-table-container mt-4 bg-container rounded-lg p-4">
+            `;
+            if (window.app.state.calculations.length === 0) {
+                historyHtml += '<p class="text-center text-secondary">No saved calculations yet. Save some from the other tabs!</p>';
             } else {
-                const saveButton = document.getElementById('save-button');
-                if (saveButton) {
-                    saveButton.addEventListener('click', () => {
-                        const calculationData = sheet.calculate();
-                        if (calculationData) {
-                            saveCalculationToFirestore(sheetName, calculationData.inputs, calculationData.results);
-                        } else {
-                            showMessage("Please enter valid numbers to save.", "error");
-                        }
-                    });
-                }
-                const inputFields = contentDiv.querySelectorAll('input');
-                inputFields.forEach(input => {
-                    input.addEventListener('input', debounce(sheet.calculate, 300));
+                historyHtml += `
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr class="text-secondary text-left">
+                                <th class="py-2 px-4 font-semibold text-sm">Date</th>
+                                <th class="py-2 px-4 font-semibold text-sm">Rule</th>
+                                <th class="py-2 px-4 font-semibold text-sm">Inputs</th>
+                                <th class="py-2 px-4 font-semibold text-sm">Results</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-600" id="history-table-body">
+                `;
+                window.app.state.calculations.forEach(calc => {
+                    const inputsStr = Object.entries(calc.inputs).map(([key, val]) => `${key}: ${val}`).join(', ');
+                    const resultsStr = Object.entries(calc.results).map(([key, val]) => `${key}: ${val}`).join(', ');
+                    historyHtml += `
+                        <tr class="text-main history-item hover:bg-gray-800">
+                            <td class="py-2 px-4 text-sm whitespace-nowrap">${new Date(calc.date).toLocaleString()}</td>
+                            <td class="py-2 px-4 text-sm">${calc.rule}</td>
+                            <td class="py-2 px-4 text-sm">${inputsStr}</td>
+                            <td class="py-2 px-4 text-sm">${resultsStr}</td>
+                        </tr>
+                    `;
                 });
-                sheet.calculate(); // Initial calculation
+                historyHtml += `
+                        </tbody>
+                    </table>
+                `;
             }
+            historyHtml += `
+                    </div>
+                </div>
+            `;
+            return historyHtml;
         };
 
-        // Firestore CRUD operations
-        const saveCalculationToFirestore = async (sheet, inputs, results) => {
-            const { db, auth } = window.app.firebase;
-            const { userId, appId } = window.app.state;
-            if (!db || !userId) {
-                console.error("Firestore not initialized or user ID missing.");
-                showMessage("Database connection error. Please try again.", "error");
-                return;
-            }
-            try {
-                const docRef = await addDoc(collection(db, `/artifacts/${appId}/users/${userId}/calculations`), {
-                    sheet: sheet,
-                    inputs: inputs,
-                    results: results,
-                    timestamp: serverTimestamp()
-                });
-                showMessage("Calculation saved successfully!");
-                console.log("Document written with ID: ", docRef.id);
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                showMessage("Error saving calculation.", "error");
-            }
-        };
-
-        const deleteCalculationFromFirestore = async (docId) => {
-            const { db, auth } = window.app.firebase;
-            const { userId, appId } = window.app.state;
-            if (!db || !userId) {
-                console.error("Firestore not initialized or user ID missing.");
-                showMessage("Database connection error.", "error");
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, `/artifacts/${appId}/users/${userId}/calculations`, docId));
-                showMessage("Calculation deleted successfully!");
-            } catch (e) {
-                console.error("Error deleting document: ", e);
-                showMessage("Error deleting calculation.", "error");
-            }
+        const renderNotesSheet = () => {
+            const notesHtml = `
+                <div class="flex flex-col h-full">
+                    <textarea id="notes-content" class="w-full flex-grow p-4 rounded-lg bg-container text-main border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="15" placeholder="Write your trading notes here..."></textarea>
+                </div>
+            `;
+            return notesHtml;
         };
         
-        const clearAllHistory = async () => {
-            const { db, auth } = window.app.firebase;
-            const { userId, appId } = window.app.state;
-            if (!db || !userId) {
-                console.error("Firestore not initialized or user ID missing.");
-                showMessage("Database connection error.", "error");
-                return;
-            }
+        // Main rendering function
+        const renderActiveSheet = () => {
+            const sheetContent = document.getElementById('sheet-content');
+            const activeSheet = window.app.state.activeSheet;
+            const sheet = sheets[activeSheet];
             
-            try {
-              const calculationsRef = collection(db, `/artifacts/${appId}/users/${userId}/calculations`);
-              const querySnapshot = await getDocs(calculationsRef);
-              const batch = writeBatch(db);
-              querySnapshot.forEach(doc => {
-                  batch.delete(doc.ref);
-              });
-              await batch.commit();
-              showMessage("All history cleared successfully!");
-            } catch (e) {
-                console.error("Error clearing all history: ", e);
-                showMessage("Error clearing history.", "error");
-            }
-        };
+            // Clear previous content and render new sheet
+            sheetContent.innerHTML = generateSheetHTML(activeSheet);
 
-        const saveNotesToFirestore = async (notesContent) => {
-            const { db, auth } = window.app.firebase;
-            const { userId, appId } = window.app.state;
-            if (!db || !userId) {
-                console.error("Firestore not initialized or user ID missing.");
-                showMessage("Database connection error.", "error");
-                return;
-            }
-            try {
-                const notesRef = doc(db, `/artifacts/${appId}/users/${userId}/notes/user_notes`);
-                await setDoc(notesRef, { content: notesContent, timestamp: serverTimestamp() });
-                showMessage("Notes saved successfully!");
-            } catch (e) {
-                console.error("Error saving notes: ", e);
-                showMessage("Error saving notes.", "error");
-            }
-        };
+            // Add event listeners based on the active sheet
+            const isInputSheet = ['Umbrella', 'Bike', 'Rikshaw', 'Car', 'Pandavas'].includes(activeSheet);
+            if (isInputSheet) {
+                const inputFields = sheet.fields.filter(f => f.type === 'input');
+                const debouncedCalculate = debounce(() => {
+                    const result = sheet.calculate();
+                }, 300);
 
-        // Firestore Real-time Listeners
-        window.app.setupFirestoreListeners = () => {
-            const { db } = window.app.firebase;
-            const { userId, appId } = window.app.state;
-
-            if (!db || !userId) {
-                console.log("Firestore or userId not available. Skipping listeners.");
-                return;
-            }
-
-            // Listen for changes in calculations
-            const calculationsRef = collection(db, `/artifacts/${appId}/users/${userId}/calculations`);
-            onSnapshot(calculationsRef, (snapshot) => {
-                const calculations = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    calculations.push({ id: doc.id, ...data });
+                inputFields.forEach(field => {
+                    const inputElement = document.getElementById(field.id);
+                    if (inputElement) {
+                        inputElement.addEventListener('input', debouncedCalculate);
+                        // Also trigger calculation on load with pre-filled values if any
+                        debouncedCalculate();
+                    }
                 });
-                calculations.sort((a, b) => b.timestamp - a.timestamp);
-                window.app.state.calculations = calculations;
-                if (window.app.state.activeSheet === 'History') {
-                    window.app.renderSheet('History');
-                }
-            });
+                
+                const saveButton = document.getElementById('save-calculation');
+                saveButton.addEventListener('click', () => {
+                    const result = sheet.calculate();
+                    if (result) {
+                        const timestamp = new Date().toISOString();
+                        window.app.state.calculations.push({
+                            date: timestamp,
+                            rule: activeSheet,
+                            inputs: result.inputs,
+                            results: result.results
+                        });
+                        saveToLocalStorage();
+                        showMessage(`Calculation for ${activeSheet} saved!`);
+                    } else {
+                        showMessage('Please enter valid numbers to save.', 'error');
+                    }
+                });
+            } else if (activeSheet === 'History') {
+                const clearButton = document.getElementById('clear-history');
+                clearButton.addEventListener('click', () => {
+                    window.app.state.calculations = [];
+                    saveToLocalStorage();
+                    renderActiveSheet();
+                    showMessage('History cleared!');
+                });
 
-            // Listen for changes in notes
-            const notesRef = doc(db, `/artifacts/${appId}/users/${userId}/notes/user_notes`);
-            onSnapshot(notesRef, (doc) => {
-                if (doc.exists()) {
-                    window.app.state.notes = doc.data().content;
-                } else {
-                    window.app.state.notes = "";
+                const copyButton = document.getElementById('copy-history');
+                copyButton.addEventListener('click', () => {
+                    const csvContent = convertToCSV(window.app.state.calculations);
+                    copyToClipboard(csvContent);
+                });
+
+                const exportButton = document.getElementById('export-history');
+                exportButton.addEventListener('click', () => {
+                    const csvContent = convertToCSV(window.app.state.calculations);
+                    downloadCSV(csvContent, 'trading-history.csv');
+                });
+            } else if (activeSheet === 'Notes') {
+                const notesTextarea = document.getElementById('notes-content');
+                if (notesTextarea) {
+                    notesTextarea.value = window.app.state.notes;
+                    notesTextarea.addEventListener('input', debounce((e) => {
+                        window.app.state.notes = e.target.value;
+                        saveToLocalStorage();
+                    }, 500));
                 }
-                if (window.app.state.activeSheet === 'Notes') {
-                    window.app.renderSheet('Notes');
-                }
-            });
+            }
         };
 
-        // History tab utility functions
-        const exportToCSV = () => {
-            const calculations = window.app.state.calculations;
-            if (calculations.length === 0) {
-                showMessage("No data to export.", "error");
-                return;
-            }
+        const convertToCSV = (data) => {
+            if (data.length === 0) return '';
+            const headers = ['Date', 'Rule', 'Inputs', 'Results'];
+            const csvRows = [headers.join(',')];
 
-            let csv = "Timestamp,Rule,Input Values,Results\n";
-            calculations.forEach(calc => {
-                const date = new Date(calc.timestamp.seconds * 1000).toLocaleString();
-                const inputs = Object.entries(calc.inputs).map(([k, v]) => `${k}=${v}`).join('; ');
-                const results = Object.entries(calc.results).map(([k, v]) => `${k}=${v ? v.toFixed(2) : '-'}`).join('; ');
-                csv += `"${date}","${calc.sheet}","${inputs}","${results}"\n`;
+            data.forEach(calc => {
+                const date = `"${new Date(calc.date).toLocaleString()}"`;
+                const rule = `"${calc.rule}"`;
+                const inputs = `"${Object.entries(calc.inputs).map(([key, val]) => `${key}: ${val}`).join('; ')}"`;
+                const results = `"${Object.entries(calc.results).map(([key, val]) => `${key}: ${val}`).join('; ')}"`;
+                csvRows.push([date, rule, inputs, results].join(','));
             });
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
+            return csvRows.join('\n');
+        };
+
+        const copyToClipboard = (text) => {
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showMessage('Copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage('Failed to copy to clipboard.', 'error');
+            }
+            document.body.removeChild(tempTextArea);
+        };
+
+        const downloadCSV = (content, filename) => {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", "trading_calculations.csv");
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showMessage("CSV file downloaded!");
+                showMessage('CSV file downloaded!');
+            } else {
+                showMessage('Your browser does not support downloading files.', 'error');
             }
         };
 
-        const copyToClipboard = () => {
-            const calculations = window.app.state.calculations;
-            if (calculations.length === 0) {
-                showMessage("No data to copy.", "error");
-                return;
-            }
-
-            const header = "Date\tRule\tInput Values\tResults\n";
-            const data = calculations.map(calc => {
-                const date = new Date(calc.timestamp.seconds * 1000).toLocaleString();
-                const inputs = Object.entries(calc.inputs).map(([k, v]) => `${k}=${v}`).join('; ');
-                const results = Object.entries(calc.results).map(([k, v]) => `${k}=${v ? v.toFixed(2) : '-'}`).join('; ');
-                return `${date}\t${calc.sheet}\t${inputs}\t${results}`;
-            }).join('\n');
-            const textToCopy = header + data;
-
-            const tempTextArea = document.createElement("textarea");
-            tempTextArea.value = textToCopy;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-
-            showMessage("History copied to clipboard!");
-        };
-
-        // Daily Quote logic using Gemini API
+        // Quote of the day from Gemini API
         const fetchDailyQuote = async () => {
-            const quoteEl = document.getElementById('daily-quote');
-            if (!quoteEl) return;
+          const quoteElement = document.getElementById('daily-quote');
+          const loadingHtml = `<div class="flex items-center justify-center space-x-2"><div class="loading-spinner"></div><span>Loading today's trader quote…</span></div>`;
+          quoteElement.innerHTML = loadingHtml;
+          const prompt = "Generate a short, inspiring, and unique quote about trading or investing, no more than 20 words. Do not use quotes from famous people. Just provide the quote itself, with no attribution or extra text.";
 
-            quoteEl.innerHTML = `<div class="flex items-center justify-center space-x-2"><div class="loading-spinner"></div><span>Loading today's trader quote…</span></div>`;
-            const prompt = `Provide a short, inspiring quote about trading or finance from a well-known investor, trader, or economist. The quote should be no more than two sentences. The response should be a plain text string in the format "Quote" - Author.`;
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+          // Exponential backoff for API calls
+          let retryCount = 0;
+          const maxRetries = 3;
+          let delay = 1000;
 
+          while (retryCount < maxRetries) {
             try {
-                let response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                let result = await response.json();
-                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    quoteEl.textContent = text;
-                } else {
-                    quoteEl.textContent = "Error: Failed to get quote. Please try again later.";
-                    console.error("Gemini API response structure is unexpected or content is missing.");
-                }
+              const chatHistory = [];
+              chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+              const payload = { contents: chatHistory };
+              const apiKey = ""
+              const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+              
+              const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+
+              if (!response.ok) {
+                throw new Error(`API call failed with status: ${response.status}`);
+              }
+              
+              const result = await response.json();
+              
+              if (result.candidates && result.candidates.length > 0 &&
+                  result.candidates[0].content && result.candidates[0].content.parts &&
+                  result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text.trim();
+                quoteElement.innerHTML = `&ldquo;${text}&rdquo;`;
+                return;
+              } else {
+                throw new Error('Unexpected API response format');
+              }
             } catch (error) {
-                console.error("Error fetching daily quote:", error);
-                quoteEl.textContent = "Error: Failed to get quote.";
+              console.error(`Attempt ${retryCount + 1} failed:`, error);
+              if (retryCount < maxRetries - 1) {
+                await new Promise(res => setTimeout(res, delay));
+                delay *= 2; // Exponential backoff
+              } else {
+                quoteElement.textContent = "Failed to load quote. Please try again later.";
+              }
+              retryCount++;
             }
+          }
         };
 
 
-        // Main App Logic
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initial render
-            const params = new URLSearchParams(window.location.search);
-            const initialSheet = params.get('sheet') || 'Umbrella';
-            window.app.state.activeSheet = initialSheet;
-            window.app.renderSheet(initialSheet);
-            
-            // Set initial theme
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.body.dataset.theme = savedTheme;
-            window.app.state.theme = savedTheme;
-            document.getElementById('toggle-icon').className = savedTheme === 'dark' ? 'fas fa-sun text-xl' : 'fas fa-moon text-xl';
+        // Main Initialization
+        const init = () => {
+            loadFromLocalStorage();
+            renderActiveSheet();
+            fetchDailyQuote();
 
-            // Attach event listeners
-            document.getElementById('tab-navigation').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab-button')) {
-                    const sheetName = e.target.dataset.sheet;
-                    window.app.state.activeSheet = sheetName;
-                    
-                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                    e.target.classList.add('active');
+            // Tab Navigation
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelector('.tab-button.active').classList.remove('active');
+                    button.classList.add('active');
+                    window.app.state.activeSheet = button.dataset.sheet;
+                    renderActiveSheet();
+                });
+            });
 
-                    // Update URL without reloading
-                    const newUrl = new URL(window.location);
-                    newUrl.searchParams.set('sheet', sheetName);
-                    window.history.pushState({}, '', newUrl);
+            // Theme Toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const body = document.body;
 
-                    window.app.renderSheet(sheetName);
+            const updateThemeIcon = (theme) => {
+                if (theme === 'dark') {
+                    toggleIcon.classList.remove('fa-sun');
+                    toggleIcon.classList.add('fa-moon');
+                } else {
+                    toggleIcon.classList.remove('fa-moon');
+                    toggleIcon.classList.add('fa-sun');
+                }
+            };
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                body.setAttribute('data-theme', newTheme);
+                window.app.state.theme = newTheme;
+                updateThemeIcon(newTheme);
+            });
+            // Set initial theme icon
+            updateThemeIcon(window.app.state.theme);
+
+            // Help Modal
+            const helpButton = document.getElementById('help-button');
+            const helpModal = document.getElementById('help-modal');
+            const closeModal = document.getElementById('close-modal');
+            const modalOverlay = document.getElementById('help-modal');
+
+            helpButton.addEventListener('click', () => {
+                helpModal.classList.remove('hidden');
+                setTimeout(() => helpModal.classList.add('active'), 10);
+            });
+
+            closeModal.addEventListener('click', () => {
+                helpModal.classList.remove('active');
+                setTimeout(() => helpModal.classList.add('hidden'), 300);
+            });
+
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    helpModal.classList.remove('active');
+                    setTimeout(() => helpModal.classList.add('hidden'), 300);
                 }
             });
 
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-                const newTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
-                document.body.dataset.theme = newTheme;
-                window.app.state.theme = newTheme;
-                localStorage.setItem('theme', newTheme);
-                document.getElementById('toggle-icon').className = newTheme === 'dark' ? 'fas fa-sun text-xl' : 'fas fa-moon text-xl';
-            });
-            
-            document.getElementById('help-button').addEventListener('click', () => {
-                document.getElementById('help-modal').classList.add('active');
-            });
-
-            document.getElementById('close-modal').addEventListener('click', () => {
-                document.getElementById('help-modal').classList.remove('active');
-            });
+            // Share Buttons
+            const shareUrl = window.location.href;
+            const shareText = "Check out this awesome Trading Rules Calculator!";
 
             document.getElementById('share-whatsapp').addEventListener('click', () => {
-                const shareText = `Check out this Trading Rules Calculator: ${window.location.href}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+                window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`, '_blank');
             });
-
             document.getElementById('share-telegram').addEventListener('click', () => {
-                const shareText = `Check out this Trading Rules Calculator: ${window.location.href}`;
-                window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`, '_blank');
+                window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
             });
-
             document.getElementById('copy-link').addEventListener('click', () => {
-                const tempInput = document.createElement("input");
-                tempInput.value = window.location.href;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                showMessage("Link copied to clipboard!");
+                copyToClipboard(shareUrl);
             });
+        };
 
-            // Fetch the daily quote
-            fetchDailyQuote();
-        });
+        window.addEventListener('load', init);
+
     </script>
 </body>
 </html>
