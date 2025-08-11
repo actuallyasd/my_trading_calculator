@@ -1,985 +1,1091 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Trading Rules Calculator</title>
 
-<!-- Keep Tailwind + FontAwesome as in original -->
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta charset="UTF-8">
 
-<!-- Inter font (kept) -->
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  :root{
-    --bg-light: #f3f4f6;
-    --bg-dark: #0b1220;
-    --card-light: #ffffff;
-    --card-dark: #0f1724;
-    --muted-light: #6b7280;
-    --muted-dark: #cbd5e1;
-    --accent: #3b82f6;
-    --glass-alpha: 0.06;
-    --texture-light: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
-    --texture-dark: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
-  }
+    <title>Trading Rules Calculator</title>
 
-  /* base */
-  html,body{height:100%}
-  body{
-    font-family: 'Inter', sans-serif;
-    margin:0;
-    min-height:100%;
-    transition: background-color .25s ease,color .25s ease;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-  }
+    <!-- Tailwind CSS for styling -->
 
-  /* light theme */
-  body[data-theme="light"]{
-    background-color:var(--bg-light);
-    color:#0f1724;
-    background-image: var(--texture-light);
-    background-attachment: fixed;
-  }
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  /* dark theme */
-  body[data-theme="dark"]{
-    background-color:var(--bg-dark);
-    color:#e6eef8;
-    background-image: var(--texture-dark);
-    background-attachment: fixed;
-  }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-  /* container / card */
-  .app-wrap{
-    max-width:1100px;
-    margin:28px auto;
-    padding:18px;
-  }
-  .panel{
-    border-radius:12px;
-    padding:22px;
-    transition: background-color .2s ease, box-shadow .2s ease;
-    box-shadow: 0 6px 24px rgba(2,6,23,0.12);
-  }
-  body[data-theme="light"] .panel{
-    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.9));
-    border: 1px solid rgba(15,23,42,0.04);
-  }
-  body[data-theme="dark"] .panel{
-    background: linear-gradient(180deg, rgba(8,12,18,0.6), rgba(12,18,28,0.7));
-    border: 1px solid rgba(255,255,255,0.03);
-  }
+    <style>
 
-  /* header */
-  .top-controls{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-bottom:14px;
-  }
-  .title{
-    display:flex;
-    gap:12px;
-    align-items:center;
-  }
-  .title h1{ font-size:1.45rem; margin:0; font-weight:700; letter-spacing:-0.02em; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
-  /* buttons */
-  .btn {
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 12px;
-    border-radius:10px;
-    font-weight:600;
-    cursor:pointer;
-    border:1px solid rgba(0,0,0,0.06);
-    background:transparent;
-  }
-  body[data-theme="light"] .btn { color: #0f1724; }
-  body[data-theme="dark"]  .btn { color: #e6eef8; border-color: rgba(255,255,255,0.04); }
+        body {
 
-  /* telegram strip */
-  .telegram-strip{
-    margin-top:18px;
-    padding:14px;
-    border-radius:12px;
-    display:flex;align-items:center;justify-content:center;
-  }
-  body[data-theme="light"] .telegram-strip { background: rgba(99,102,241,0.06); color:#111827; }
-  body[data-theme="dark"]  .telegram-strip { background: rgba(99,102,241,0.08); color:#e6eef8; }
+            font-family: 'Inter', sans-serif;
 
-  /* modal overlay (kept) */
-  .modal-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:60; }
-  .modal-content{ max-width:520px; width:96%; border-radius:12px; padding:18px; }
+        }
 
-  /* result field visual */
-  .result-field > div { padding:10px; border-radius:8px; font-weight:700; text-align:center; }
-  body[data-theme="light"] .result-field > div { background:#eef2ff; color:#0f1724; }
-  body[data-theme="dark"]  .result-field > div { background: rgba(255,255,255,0.04); color: #e6eef8; }
+        .tab-button {
 
-  /* small responsive */
-  @media (max-width:640px){
-    .top-controls{ flex-direction:column; align-items:stretch; gap:8px; }
-    .title h1{ font-size:1.2rem; }
-  }
+            transition: all 0.3s ease-in-out;
 
-  /* bottom quote area */
-  #daily-quote {
-    margin-top:22px;
-    font-style:italic;
-    opacity:0.95;
-    text-align:center;
-    font-size:0.98rem;
-    padding:12px 8px;
-    border-radius:8px;
-  }
-  body[data-theme="light"] #daily-quote { background: rgba(15,23,42,0.04); color:#0f1724; }
-  body[data-theme="dark"]  #daily-quote { background: rgba(255,255,255,0.03); color:#e6eef8; }
+        }
 
-  /* tiny helpers to preserve your original classes look */
-  .input-field input{ width:100%; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); }
-  body[data-theme="dark"] .input-field input { background: rgba(255,255,255,0.03); color: #e6eef8; border-color: rgba(255,255,255,0.04); }
+        [data-theme='dark'] .tab-button.active {
 
-</style>
+            background-color: #3b82f6;
+
+            color: white;
+
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+        }
+
+        [data-theme='light'] .tab-button.active {
+
+            background-color: #1f2937;
+
+            color: white;
+
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+        }
+
+        [data-theme='dark'] .tab-button {
+
+            background-color: #374151;
+
+            color: #d1d5db;
+
+        }
+
+        [data-theme='light'] .tab-button {
+
+            background-color: #e5e7eb;
+
+            color: #4b5563;
+
+        }
+
+        [data-theme='dark'] .bg-body { background-color: #0d1117; }
+
+        [data-theme='light'] .bg-body { background-color: #f3f4f6; }
+
+        [data-theme='dark'] .bg-container { background-color: #161b22; }
+
+        [data-theme='light'] .bg-container { background-color: #ffffff; }
+
+        [data-theme='dark'] .text-main { color: #f9fafb; }
+
+        [data-theme='light'] .text-main { color: #1f2937; }
+
+        [data-theme='dark'] .text-secondary { color: #d1d5db; }
+
+        [data-theme='light'] .text-secondary { color: #4b5563; }
+
+        /* Readability fix for inputs and results */
+
+        [data-theme='dark'] .input-field input { background-color: #374151; color: white; border-color: #4b5563; }
+
+        [data-theme='light'] .input-field input { background-color: #ffffff; color: #1f2937; border-color: #d1d5db; }
+
+        [data-theme='dark'] .result-field > div { background-color: #4b5563; color: white; border-color: #6b7280; }
+
+        [data-theme='light'] .result-field > div { background-color: #e5e7eb; color: #1f2937; border-color: #d1d5db; }
+
+        .tab-content > div {
+
+            border-radius: 0.5rem;
+
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+        }
+
+
+
+        /* --- Theme-specific colors for the sheets (Crucial for readability) --- */
+
+        [data-theme='dark'] .bg-umbrella { background-color: #1e3a8a; } /* dark blue */
+
+        [data-theme='light'] .bg-umbrella { background-color: #dbeafe; } /* light blue */
+
+        [data-theme='dark'] .text-umbrella { color: #93c5fd; }
+
+        [data-theme='light'] .text-umbrella { color: #1e3a8a; }
+
+
+
+        [data-theme='dark'] .bg-bike { background-color: #065f46; } /* dark green */
+
+        [data-theme='light'] .bg-bike { background-color: #dcfce7; } /* light green */
+
+        [data-theme='dark'] .text-bike { color: #6ee7b7; }
+
+        [data-theme='light'] .text-bike { color: #065f46; }
+
+
+
+        [data-theme='dark'] .bg-rikshaw { background-color: #5b21b6; } /* dark purple */
+
+        [data-theme='light'] .bg-rikshaw { background-color: #ede9fe; } /* light purple */
+
+        [data-theme='dark'] .text-rikshaw { color: #c4b5fd; }
+
+        [data-theme='light'] .text-rikshaw { color: #5b21b6; }
+
+
+
+        [data-theme='dark'] .bg-car { background-color: #991b1b; } /* dark red */
+
+        [data-theme='light'] .bg-car { background-color: #fee2e2; } /* light red */
+
+        [data-theme='dark'] .text-car { color: #fca5a5; }
+
+        [data-theme='light'] .text-car { color: #991b1b; }
+
+
+
+        [data-theme='dark'] .bg-pandavas { background-color: #9a3412; } /* dark orange */
+
+        [data-theme='light'] .bg-pandavas { background-color: #ffedd5; } /* light orange */
+
+        [data-theme='dark'] .text-pandavas { color: #fdba74; }
+
+        [data-theme='light'] .text-pandavas { color: #9a3412; }
+
+
+
+        /* Modal styling */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            background-color: rgba(0, 0, 0, 0.7);
+
+            backdrop-filter: blur(5px);
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 1000;
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+
+        }
+
+        .modal-overlay.active {
+
+            opacity: 1;
+
+            visibility: visible;
+
+        }
+
+        .modal-content {
+
+            padding: 2rem;
+
+            border-radius: 1rem;
+
+            max-width: 90%;
+
+            width: 500px;
+
+            position: relative;
+
+            transform: scale(0.9);
+
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+        .modal-overlay.active .modal-content {
+
+            transform: scale(1);
+
+        }
+
+        [data-theme='dark'] .modal-content {
+
+            background-color: #1f2937;
+
+            color: #f9fafb;
+
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+
+        }
+
+        [data-theme='light'] .modal-content {
+
+            background-color: #ffffff;
+
+            color: #1f2937;
+
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+
+        }
+
+        .history-item {
+
+            cursor: pointer;
+
+            transition: background-color 0.2s;
+
+        }
+
+        [data-theme='dark'] .history-item:hover {
+
+            background-color: #2d3748;
+
+        }
+
+        [data-theme='light'] .history-item:hover {
+
+            background-color: #e5e7eb;
+
+        }
+
+        .message-box {
+
+            position: fixed;
+
+            top: 1rem;
+
+            right: 1rem;
+
+            padding: 1rem 1.5rem;
+
+            border-radius: 0.5rem;
+
+            background-color: #38a169;
+
+            color: white;
+
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            z-index: 1001;
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transform: translateY(-20px);
+
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+
+        }
+
+        .message-box.show {
+
+            opacity: 1;
+
+            visibility: visible;
+
+            transform: translateY(0);
+
+        }
+
+        .history-scroll-container {
+
+            max-height: 500px;
+
+            overflow-y: auto;
+
+        }
+
+    </style>
+
 </head>
 
-<body data-theme="dark">
-  <div class="app-wrap">
-    <div class="panel">
-      <div class="top-controls">
-        <div class="title">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="transform:translateY(-2px)">
-            <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="currentColor" stroke-opacity="0.08"/>
-            <path d="M4 16 L10 9 L14 13 L20 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-          <h1 class="text-main">Trading Rules Calculator</h1>
-          <div style="font-size:0.9rem;color:var(--muted-light); margin-left:8px; align-self:center;">
-            <span style="opacity:.7">— quick levels</span>
-          </div>
-        </div>
+<body class="bg-body min-h-screen p-4 sm:p-8 flex flex-col items-center font-sans transition-colors duration-300" data-theme="dark">
 
-        <!-- theme toggle & help kept with original ids (so original script references won't break) -->
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="help-button" class="btn" title="Help (short)"><i class="fas fa-question"></i></button>
-          <button id="theme-toggle" class="btn" title="Toggle theme"><i class="fas fa-sun" id="toggle-icon"></i>&nbsp;Theme</button>
-        </div>
-      </div>
 
-      <p style="margin:0 0 18px 0; color:var(--muted-dark);">
-        Enter your values and the calculator will automatically compute the results based on the chosen rule.
-      </p>
 
-      <!-- Tab Navigation (kept exactly as original) -->
-      <div id="tab-navigation" class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600 active" data-sheet="Umbrella">Umbrella</button>
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Bike">Bike</button>
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Rikshaw">Rikshaw</button>
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Car">Car</button>
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Pandavas">Pandavas</button>
-        <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="History">History</button>
-      </div>
+    <div class="w-full max-w-4xl bg-container rounded-xl shadow-2xl p-6 sm:p-10 transition-colors duration-300">
 
-      <!-- This container will be populated by your existing sheets object rendering logic (unchanged) -->
-      <div id="sheet-content"></div>
-    </div>
+        <!-- Theme Toggle and Help Button -->
 
-    <!-- Telegram Link Section (kept, slightly styled) -->
-    <div class="telegram-strip panel mt-4">
-      <a href="https://t.me/Mathstrade" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 font-semibold">
-        <i class="fab fa-telegram-plane text-2xl" aria-hidden="true"></i>
-        <span>Connect on Telegram</span>
-      </a>
-    </div>
+        <div class="flex justify-end gap-2 mb-4">
 
-    <!-- Daily quote (API-powered with fallback and day cache) -->
-    <div id="daily-quote" aria-live="polite">Loading quote…</div>
-  </div>
+            <button id="help-button" class="p-2 rounded-full text-secondary hover:bg-gray-700 transition-colors duration-200">
 
-  <!-- Help modal (kept; markup preserved behavior) -->
-  <div id="help-modal" class="modal-overlay hidden" style="display:none;opacity:0;pointer-events:none">
-    <div class="modal-content panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
-      <button id="close-modal" class="btn" style="position:absolute; right:14px; top:12px;"><i class="fas fa-times"></i></button>
-      <h2 id="help-title" style="margin-top:12px">How It Works</h2>
-      <p style="color:var(--muted-dark)">
-        This is a trading rules calculator. It helps you quickly determine key trading points based on specific formulas.
-      </p>
-      <ul style="color:var(--muted-dark); margin-top:12px;">
-        <li><strong>Tabs:</strong> Each tab represents a different trading rule with its own unique calculation. The History tab shows your saved data.</li>
-        <li><strong>Inputs:</strong> Enter the values (High, Low, etc.) and results update automatically.</li>
-        <li><strong>History:</strong> Save and export calculations via the History tab.</li>
-      </ul>
-    </div>
-  </div>
+                <i class="fas fa-question text-xl"></i>
 
-  <!-- Message Box (kept) -->
-  <div id="message-box" class="message-box" style="display:none;position:fixed;right:1rem;top:1rem;"></div>
+            </button>
 
-  <!-- ====== Original script logic preserved below (I DID NOT change IDs, logic, or function names) ====== -->
-  <script>
-    /* --------- THEME + INITIALIZATION (added, but compatible with your original theme-toggle listener) --------- */
-    (function themeInit(){
-      try{
-        const saved = localStorage.getItem('trading-theme') || 'dark';
-        document.body.setAttribute('data-theme', saved);
-        const icon = document.getElementById('toggle-icon');
-        if(icon){
-          if(saved === 'dark'){ icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
-          else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
-        }
-        // ensure clicks toggle and persist
-        const themeBtn = document.getElementById('theme-toggle');
-        if(themeBtn){
-          themeBtn.addEventListener('click', () => {
-            const current = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', current);
-            localStorage.setItem('trading-theme', current);
-            const icon = document.getElementById('toggle-icon');
-            if(icon){
-              if(current === 'dark'){ icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
-              else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
-            }
-          });
-        }
-      }catch(e){
-        console.warn('theme init err', e);
-      }
-    })();
+            <button id="theme-toggle" class="p-2 rounded-full text-secondary hover:bg-gray-700 transition-colors duration-200">
 
-    /* --------- DAILY QUOTE (API + fallback + day cache) --------- */
-    (function dailyQuote(){
-      const fallback = [
-        "Cut your losses short, let your winners run.",
-        "Plan your trade. Trade your plan.",
-        "Risk management > winning trades.",
-        "The trend is your friend until it isn't.",
-        "Discipline beats emotion every time."
-      ];
+                <i class="fas fa-sun text-xl" id="toggle-icon"></i>
 
-      const quoteEl = document.getElementById('daily-quote');
+            </button>
 
-      // check cache (one per day)
-      try{
-        const cache = JSON.parse(localStorage.getItem('trading-quote-cache') || '{}');
-        const todayStr = new Date().toISOString().slice(0,10);
-        if(cache.date === todayStr && cache.quote){
-          quoteEl.textContent = cache.quote;
-          return;
-        }
-      }catch(e){ /* ignore, fallthrough */ }
+        </div>
 
-      // try fetch from quotable (business tag). If it fails, fallback to deterministic pick
-      const pickFallback = () => {
-        const index = (new Date()).getDate() % fallback.length;
-        return fallback[index];
-      };
 
-      (async ()=>{
-        try{
-          // Use a small timeout wrapper
-          const controller = new AbortController();
-          const timeout = setTimeout(()=>controller.abort(), 4000);
-          const res = await fetch('https://api.quotable.io/random?tags=business|wisdom', {signal: controller.signal});
-          clearTimeout(timeout);
-          if(!res.ok) throw new Error('bad resp');
-          const j = await res.json();
-          const txt = (j && j.content) ? j.content : pickFallback();
-          quoteEl.textContent = txt;
-          try{ localStorage.setItem('trading-quote-cache', JSON.stringify({date: new Date().toISOString().slice(0,10), quote: txt})); }catch(e){}
-        }catch(err){
-          const txt = pickFallback();
-          quoteEl.textContent = txt;
-        }
-      })();
-    })();
-  </script>
 
-  <!-- ====== BEGIN: Your original large app script (preserved & pasted, small cosmetic init adjustments only) ====== -->
-  <script>
-    // --- Full original "sheets" object and logic preserved below. I did not alter function names, IDs, storage keys, or flows.
-    // To avoid accidental collisions with the theme/quote code above, this block is unchanged in behavior.
-    const sheets = {
-      Umbrella: {
-        content: `
-            <div class="bg-umbrella p-6 sm:p-8 rounded-lg">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-umbrella">Umbrella (Daily Candle)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="input-field" data-label="Previous Day High" data-id="umbrella-high"></div>
-                    <div class="input-field" data-label="Previous Day Low" data-id="umbrella-low"></div>
-                    <div class="result-field" data-label="Range (High - Low)" data-id="umbrella-range"></div>
-                    <div class="result-field" data-label="&quot;X&quot; (Range * 26.11%)" data-id="umbrella-x"></div>
-                    <div class="result-field" data-label="High - &quot;X&quot;" data-id="umbrella-high-minus-x"></div>
-                    <div class="result-field" data-label="Low + &quot;X&quot;" data-id="umbrella-low-plus-x"></div>
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-            </div>
-        `,
-        calculate: () => {
-          const high = parseFloat(document.getElementById('umbrella-high').value);
-          const low = parseFloat(document.getElementById('umbrella-low').value);
-          const results = {
-            high: high,
-            low: low,
-            range: '-',
-            x: '-',
-            highMinusX: '-',
-            lowPlusX: '-'
-          };
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-2 text-main">Trading Rules Calculator</h1>
 
-          if (!isNaN(high) && !isNaN(low)) {
-            results.range = high - low;
-            results.x = results.range * 0.2611;
-            results.highMinusX = high - results.x;
-            results.lowPlusX = low + results.x;
+        <p class="text-center text-secondary mb-8 max-w-prose mx-auto text-sm sm:text-base">
 
-            document.getElementById('umbrella-range').textContent = results.range.toFixed(2);
-            document.getElementById('umbrella-x').textContent = results.x.toFixed(2);
-            document.getElementById('umbrella-high-minus-x').textContent = results.highMinusX.toFixed(2);
-            document.getElementById('umbrella-low-plus-x').textContent = results.lowPlusX.toFixed(2);
-          } else {
-            document.getElementById('umbrella-range').textContent = '-';
-            document.getElementById('umbrella-x').textContent = '-';
-            document.getElementById('umbrella-high-minus-x').textContent = '-';
-            document.getElementById('umbrella-low-plus-x').textContent = '-';
-          }
-          return results;
-        }
-      },
-      Bike: {
-        content: `
-            <div class="bg-bike p-6 sm:p-8 rounded-lg">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-bike">Bike (1/2 Day Candle, 195 Minutes)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="input-field" data-label="High" data-id="bike-high"></div>
-                    <div class="input-field" data-label="Low" data-id="bike-low"></div>
-                    <div class="result-field" data-label="SQRT(High) &quot;X&quot;" data-id="bike-sqrt-high-x"></div>
-                    <div class="result-field" data-label="Ding Ding (from &quot;X&quot;)" data-id="bike-ding-ding-x"></div>
-                    <div class="result-field" data-label="High + Ding Ding" data-id="bike-high-plus-ding"></div>
-                    <div class="result-field" data-label="SQRT(Low) &quot;Y&quot;" data-id="bike-sqrt-low-y"></div>
-                    <div class="result-field" data-label="Ding Ding (from &quot;Y&quot;)" data-id="bike-ding-ding-y"></div>
-                    <div class="result-field" data-label="Low - Ding Ding" data-id="bike-low-minus-ding"></div>
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-            </div>
-        `,
-        calculate: () => {
-          const high = parseFloat(document.getElementById('bike-high').value);
-          const low = parseFloat(document.getElementById('bike-low').value);
-          const results = {
-            high: high,
-            low: low,
-            sqrtHighX: '-',
-            dingDingX: '-',
-            highPlusDingDing: '-',
-            sqrtLowY: '-',
-            dingDingY: '-',
-            lowMinusDingDing: '-'
-          };
+            Enter your values and the calculator will automatically compute the results based on the chosen rule.
 
-          if (!isNaN(high) && !isNaN(low) && high >= 0 && low >= 0) {
-            results.sqrtHighX = Math.sqrt(high);
-            results.dingDingX = results.sqrtHighX * 0.2611;
-            results.highPlusDingDing = high + results.dingDingX;
+        </p>
 
-            results.sqrtLowY = Math.sqrt(low);
-            results.dingDingY = results.sqrtLowY * 0.2611;
-            results.lowMinusDingDing = low - results.dingDingY;
 
-            document.getElementById('bike-sqrt-high-x').textContent = results.sqrtHighX.toFixed(2);
-            document.getElementById('bike-ding-ding-x').textContent = results.dingDingX.toFixed(2);
-            document.getElementById('bike-high-plus-ding').textContent = results.highPlusDingDing.toFixed(2);
-            document.getElementById('bike-sqrt-low-y').textContent = results.sqrtLowY.toFixed(2);
-            document.getElementById('bike-ding-ding-y').textContent = results.dingDingY.toFixed(2);
-            document.getElementById('bike-low-minus-ding').textContent = results.lowMinusDingDing.toFixed(2);
-          } else {
-            document.getElementById('bike-sqrt-high-x').textContent = '-';
-            document.getElementById('bike-ding-ding-x').textContent = '-';
-            document.getElementById('bike-high-plus-ding').textContent = '-';
-            document.getElementById('bike-sqrt-low-y').textContent = '-';
-            document.getElementById('bike-ding-ding-y').textContent = '-';
-            document.getElementById('bike-low-minus-ding').textContent = '-';
-          }
-          return results;
-        }
-      },
-      Rikshaw: {
-        content: `
-            <div class="bg-rikshaw p-6 sm:p-8 rounded-lg">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-rikshaw">Rikshaw (5 Minutes Candle)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="input-field" data-label="1st 5 Min Candles High" data-id="rikshaw-high"></div>
-                    <div class="input-field" data-label="1st 5 Min Candles Low" data-id="rikshaw-low"></div >
-                    <div class="result-field" data-label="High + 0.2611%" data-id="rikshaw-high-plus-26"></div>
-                    <div class="result-field" data-label="High + 0.1306%" data-id="rikshaw-high-plus-13"></div>
-                    <div class="result-field" data-label="Low - 0.2611%" data-id="rikshaw-low-minus-26"></div>
-                    <div class="result-field" data-label="Low - 0.1306%" data-id="rikshaw-low-minus-13"></div>
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-            </div>
-        `,
-        calculate: () => {
-          const high = parseFloat(document.getElementById('rikshaw-high').value);
-          const low = parseFloat(document.getElementById('rikshaw-low').value);
-          const results = {
-            high: high,
-            low: low,
-            highPlus26: '-',
-            highPlus13: '-',
-            lowMinus26: '-',
-            lowMinus13: '-'
-          };
 
-          if (!isNaN(high) && !isNaN(low)) {
-            results.highPlus26 = high * (1 + 0.002611);
-            results.highPlus13 = high * (1 + 0.001306);
-            results.lowMinus26 = low * (1 - 0.002611);
-            results.lowMinus13 = low * (1 - 0.001306);
+        <!-- Tab Navigation -->
 
-            document.getElementById('rikshaw-high-plus-26').textContent = results.highPlus26.toFixed(2);
-            document.getElementById('rikshaw-high-plus-13').textContent = results.highPlus13.toFixed(2);
-            document.getElementById('rikshaw-low-minus-26').textContent = results.lowMinus26.toFixed(2);
-            document.getElementById('rikshaw-low-minus-13').textContent = results.lowMinus13.toFixed(2);
-          } else {
-            document.getElementById('rikshaw-high-plus-26').textContent = '-';
-            document.getElementById('rikshaw-high-plus-13').textContent = '-';
-            document.getElementById('rikshaw-low-minus-26').textContent = '-';
-            document.getElementById('rikshaw-low-minus-13').textContent = '-';
-          }
-          return results;
-        }
-      },
-      Car: {
-        content: `
-            <div class="bg-car p-6 sm:p-8 rounded-lg">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-car">Car (5 Minutes Candle, 1 Hour Time Frame)</h2>
-                <p class="text-secondary mb-4">
-                    This rule calculates the midpoint and a percentage range for your trading points.
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="input-field" data-label="1130-1230 High" data-id="car-high"></div>
-                    <div class="input-field" data-label="1130-1230 Low" data-id="car-low"></div>
-                    <div class="result-field" data-label="Midpoint (High + Low) / 2" data-id="car-midpoint"></div>
-                    <div class="result-field" data-label="1.5% Above Midpoint" data-id="car-above"></div>
-                    <div class="result-field" data-label="1.5% Below Midpoint" data-id="car-below"></div>
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-            </div>
-        `,
-        calculate: () => {
-          const high = parseFloat(document.getElementById('car-high').value);
-          const low = parseFloat(document.getElementById('car-low').value);
-          const results = {
-            high: high,
-            low: low,
-            midpoint: '-',
-            above: '-',
-            below: '-'
-          };
+        <div id="tab-navigation" class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
 
-          if (!isNaN(high) && !isNaN(low)) {
-            results.midpoint = (high + low) / 2;
-            results.above = results.midpoint * 1.015; // 1.5% above
-            results.below = results.midpoint * 0.985; // 1.5% below
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600 active" data-sheet="Umbrella">Umbrella</button>
 
-            document.getElementById('car-midpoint').textContent = results.midpoint.toFixed(2);
-            document.getElementById('car-above').textContent = results.above.toFixed(2);
-            document.getElementById('car-below').textContent = results.below.toFixed(2);
-          } else {
-            document.getElementById('car-midpoint').textContent = '-';
-            document.getElementById('car-above').textContent = '-';
-            document.getElementById('car-below').textContent = '-';
-          }
-          return results;
-        }
-      },
-      Pandavas: {
-        content: `
-            <div class="bg-pandavas p-6 sm:p-8 rounded-lg">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-pandavas">Pandavas (1/2 Day Candle, 195 Minutes)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-bold text-pandavas">1st Half Values</h3>
-                        <div class="input-field" data-label="Yesterday's 1st Half High" data-id="pandavas-first-high"></div>
-                        <div class="input-field" data-label="Yesterday's 1st Half Low" data-id="pandavas-first-low"></div>
-                        <div class="input-field" data-label="Yesterday's 1st Half Close" data-id="pandavas-first-close"></div>
-                    </div>
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-bold text-pandavas">2nd Half Values</h3>
-                        <div class="input-field" data-label="Yesterday's 2nd Half High" data-id="pandavas-second-high"></div>
-                        <div class="input-field" data-label="Yesterday's 2nd Half Low" data-id="pandavas-second-low"></div>
-                        <div class="input-field" data-label="Yesterday's 2nd Half Close" data-id="pandavas-second-close"></div>
-                    </div>
-                </div>
-                <div class="mt-6 pt-6 border-t-2 border-pandavas grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="result-field" data-label="Average 1 (Pivot)" data-id="pandavas-avg1"></div>
-                    <div class="result-field" data-label="Average 2 (Pivot)" data-id="pandavas-avg2"></div>
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-            </div>
-        `,
-        calculate: () => {
-          const values1 = [
-            parseFloat(document.getElementById('pandavas-first-high').value),
-            parseFloat(document.getElementById('pandavas-first-low').value),
-            parseFloat(document.getElementById('pandavas-first-close').value)
-          ];
-          const values2 = [
-            parseFloat(document.getElementById('pandavas-second-high').value),
-            parseFloat(document.getElementById('pandavas-second-low').value),
-            parseFloat(document.getElementById('pandavas-second-close').value)
-          ];
-          const results = {
-            firstHalf: { high: values1[0], low: values1[1], close: values1[2] },
-            secondHalf: { high: values2[0], low: values2[1], close: values2[2] },
-            avg1: '-',
-            avg2: '-'
-          };
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Bike">Bike</button>
 
-          const validValues1 = values1.filter(val => !isNaN(val));
-          if (validValues1.length === 3) {
-            const sum = validValues1.reduce((acc, current) => acc + current, 0);
-            results.avg1 = sum / 3;
-            document.getElementById('pandavas-avg1').textContent = results.avg1.toFixed(2);
-          } else {
-            document.getElementById('pandavas-avg1').textContent = '-';
-          }
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Rikshaw">Rikshaw</button>
 
-          const validValues2 = values2.filter(val => !isNaN(val));
-          if (validValues2.length === 3) {
-            const sum = validValues2.reduce((acc, current) => acc + current, 0);
-            results.avg2 = sum / 3;
-            document.getElementById('pandavas-avg2').textContent = results.avg2.toFixed(2);
-          } else {
-            document.getElementById('pandavas-avg2').textContent = '-';
-          }
-          return results;
-        }
-      },
-      History: {
-        content: `
-            <div class="bg-container p-6 sm:p-8 rounded-lg min-h-[400px]">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-main mb-4 sm:mb-0">Calculation History</h2>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button id="history-export-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                            <i class="fas fa-file-csv"></i> Export as CSV
-                        </button>
-                        <button id="history-copy-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                            <i class="fas fa-copy"></i> Copy as CSV
-                        </button>
-                        <button id="history-clear-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                            <i class="fas fa-trash"></i> Clear History
-                        </button>
-                    </div>
-                </div>
-                <div id="history-list" class="space-y-4 history-scroll-container">
-                    <!-- History items will be dynamically added here -->
-                    <p id="no-history-message" class="text-center text-secondary">No saved calculations yet.</p>
-                </div>
-            </div>
-        `
-      }
-    };
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Car">Car</button>
 
-    // Helper function to create an input field
-    const createInputField = (label, id, value = '') => `
-        <div>
-            <label class="block text-sm font-medium text-secondary mb-1">${label}</label>
-            <input
-                type="number"
-                id="${id}"
-                value="${value}"
-                oninput="handleInput()"
-                onkeydown="handleKeyDown(event)"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 transition-colors duration-200"
-                placeholder="Enter value"
-            />
-        </div>
-    `;
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Pandavas">Pandavas</button>
 
-    // Helper function to create a result field
-    const createResultField = (label, id, value = '-') => `
-        <div>
-            <label class="block text-sm font-medium text-secondary mb-1">${label}</label>
-            <div id="${id}" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2 sm:text-sm font-semibold transition-colors duration-200">
-                ${value}
-            </div>
-        </div>
-    `;
+            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="History">History</button>
 
-    // This function will render the current sheet and load saved input data
-    const renderSheet = (sheetName) => {
-        const sheetContentContainer = document.getElementById('sheet-content');
-        sheetContentContainer.innerHTML = sheets[sheetName].content;
-        
-        // Set active tab button
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.sheet === sheetName) {
-                btn.classList.add('active');
-            }
-        });
+        </div>
 
-        if (sheetName !== 'History') {
-            // Populate input and result fields for calculation tabs
-            document.querySelectorAll('#sheet-content .input-field').forEach(el => {
-                el.innerHTML = createInputField(el.dataset.label, el.dataset.id);
-            });
-            document.querySelectorAll('#sheet-content .result-field').forEach(el => {
-                el.innerHTML = createResultField(el.dataset.label, el.dataset.id);
-            });
-            
-            loadSavedInputs(sheetName);
-            
-            // Add event listener for the save button after it's rendered
-            const saveButton = document.getElementById('save-button');
-            if (saveButton) {
-                saveButton.addEventListener('click', () => saveCalculation(sheetName));
-            }
-        } else {
-            renderHistory();
-            
-            // Add event listeners for history buttons
-            document.getElementById('history-export-csv-button').addEventListener('click', exportHistoryAsCsv);
-            document.getElementById('history-copy-csv-button').addEventListener('click', copyHistoryAsCsv);
-            document.getElementById('history-clear-button').addEventListener('click', clearHistory);
-        }
-    };
-    
-    // --- Input and Calculation Functions ---
-    let currentTimeout;
-    const handleInput = () => {
-        clearTimeout(currentTimeout);
-        currentTimeout = setTimeout(() => {
-            const activeTab = document.querySelector('.tab-button.active').dataset.sheet;
-            if (activeTab && sheets[activeTab] && sheets[activeTab].calculate) {
-                sheets[activeTab].calculate();
-                saveInputValues(activeTab); // Save inputs whenever they change
-            }
-        }, 300); // Debounce to prevent excessive calculation and storage
-    };
 
-    const handleKeyDown = (event) => {
-        if (event.key === 'Enter') {
-            handleInput();
-        }
-    };
 
-    // --- Local Storage Functions ---
-    
-    // Save input values to local storage for the current sheet
-    const saveInputValues = (sheetName) => {
-        const inputs = document.querySelectorAll('#sheet-content input[type="number"]');
-        const data = {};
-        inputs.forEach(input => {
-            data[input.id] = input.value;
-        });
-        localStorage.setItem(`trading-calc-${sheetName}-inputs`, JSON.stringify(data));
-    };
+        <!-- Container for Sheet Content -->
 
-    // Load input values from local storage
-    const loadSavedInputs = (sheetName) => {
-        const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}-inputs`)) || {};
-        for (const id in savedData) {
-            const input = document.getElementById(id);
-            if (input) {
-                input.value = savedData[id];
-            }
-        }
-        // Trigger calculation with loaded values
-        if (sheets[sheetName] && sheets[sheetName].calculate) {
-            sheets[sheetName].calculate();
-        }
-    };
+        <div id="sheet-content"></div>
 
-    // Save a calculation to the history
-    const saveCalculation = (sheetName) => {
-        const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-        
-        // Get inputs and results from the current tab
-        const inputs = {};
-        document.querySelectorAll('#sheet-content input[type="number"]').forEach(input => {
-            inputs[input.id.split('-')[1]] = input.value;
-        });
+    </div>
 
-        const results = {};
-        document.querySelectorAll('#sheet-content .result-field > div').forEach(result => {
-            results[result.id.split('-')[1]] = result.textContent;
-        });
+    
 
-        const currentCalc = {
-            id: Date.now(),
-            sheet: sheetName,
-            timestamp: new Date().toLocaleString(),
-            inputs: inputs,
-            results: results
-        };
+    <!-- Telegram Link Section -->
 
-        history.unshift(currentCalc); // Add to the beginning of the array
-        localStorage.setItem('trading-calc-history', JSON.stringify(history));
-        showMessage('Calculation saved to history!');
-    };
-    
-    // Render the history tab content
-    const renderHistory = () => {
-        const historyList = document.getElementById('history-list');
-        const noHistoryMessage = document.getElementById('no-history-message');
-        const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
+    <div class="w-full max-w-4xl bg-gray-800 text-white p-6 rounded-xl shadow-xl flex justify-center items-center mt-4">
 
-        historyList.innerHTML = ''; // Clear previous content
+        <a href="https://t.me/Mathstrade" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-white font-semibold hover:text-indigo-400 transition-colors duration-200">
 
-        if (history.length === 0) {
-            if (noHistoryMessage) noHistoryMessage.style.display = 'block';
-        } else {
-            if (noHistoryMessage) noHistoryMessage.style.display = 'none';
-            history.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.classList.add('history-item', 'p-4', 'rounded-lg', 'border', 'border-gray-600', 'flex', 'flex-col', 'gap-2');
-                
-                let content = `<div class="flex items-center justify-between text-secondary">
-                                <span class="font-bold text-main">${item.sheet}</span>
-                                <span class="text-xs sm:text-sm">${item.timestamp}</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-secondary mt-2">`;
-                
-                // Display inputs
-                for (const [key, value] of Object.entries(item.inputs)) {
-                    content += `<span><strong>${key}:</strong> ${value}</span>`;
-                }
-                // Display results
-                for (const [key, value] of Object.entries(item.results)) {
-                    content += `<span><strong>${key}:</strong> ${value}</span>`;
-                }
-                content += `</div>`;
-                itemElement.innerHTML = content;
-                
-                // Add click event to load calculation
-                itemElement.addEventListener('click', () => {
-                    loadHistoryItem(item);
-                });
+            <i class="fab fa-telegram-plane text-2xl"></i>
 
-                historyList.appendChild(itemElement);
-            });
-        }
-    };
+            <span class="text-lg">Connect on Telegram</span>
 
-    const loadHistoryItem = (item) => {
-        const sheetName = item.sheet;
-        renderSheet(sheetName); // Render the correct sheet first
-        
-        // Wait for the sheet to be rendered before populating fields
-        setTimeout(() => {
-            // Populate inputs
-            for (const [key, value] of Object.entries(item.inputs)) {
-                const input = document.getElementById(`${sheetName.toLowerCase()}-${key}`);
-                if (input) input.value = value;
-            }
-            
-            // Manually trigger calculation to populate results
-            if (sheets[sheetName] && sheets[sheetName].calculate) {
-                sheets[sheetName].calculate();
-            }
+        </a>
 
-            showMessage(`Loaded saved calculation for ${sheetName}`);
-        }, 100);
-    };
-    
-    const clearHistory = () => {
-        localStorage.removeItem('trading-calc-history');
-        renderHistory();
-        showMessage('History cleared!');
-    };
+    </div>
 
-    const exportHistoryAsCsv = () => {
-        const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-        if (history.length === 0) {
-            showMessage('No history to export.');
-            return;
-        }
 
-        let csvContent = 'data:text/csv;charset=utf-8,';
-        
-        // Gather all possible headers
-        const headers = new Set(['sheet', 'timestamp']);
-        history.forEach(item => {
-            Object.keys(item.inputs).forEach(key => headers.add(`input_${key}`));
-            Object.keys(item.results).forEach(key => headers.add(`result_${key}`));
-        });
-        const headerArray = Array.from(headers);
-        csvContent += headerArray.join(',') + '\n';
 
-        // Create rows
-        history.forEach(item => {
-            const row = headerArray.map(header => {
-                if (header === 'sheet') return item.sheet;
-                if (header === 'timestamp') return item.timestamp;
-                if (header.startsWith('input_')) {
-                    const key = header.substring(6);
-                    return item.inputs[key] || '';
-                }
-                if (header.startsWith('result_')) {
-                    const key = header.substring(7);
-                    return item.results[key] || '';
-                }
-                return '';
-            });
-            csvContent += row.join(',') + '\n';
-        });
+    <!-- Help Modal -->
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', 'trading_history.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage('History exported as CSV!');
-    };
-    
-    const copyHistoryAsCsv = () => {
-        const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-        if (history.length === 0) {
-            showMessage('No history to copy.');
-            return;
-        }
-    
-        let csvText = '';
-        
-        const headers = new Set(['sheet', 'timestamp']);
-        history.forEach(item => {
-            Object.keys(item.inputs).forEach(key => headers.add(`input_${key}`));
-            Object.keys(item.results).forEach(key => headers.add(`result_${key}`));
-        });
-        const headerArray = Array.from(headers);
-        csvText += headerArray.join(',') + '\n';
+    <div id="help-modal" class="modal-overlay hidden">
 
-        history.forEach(item => {
-            const row = headerArray.map(header => {
-                if (header === 'sheet') return item.sheet;
-                if (header === 'timestamp') return item.timestamp;
-                if (header.startsWith('input_')) {
-                    const key = header.substring(6);
-                    return item.inputs[key] || '';
-                }
-                if (header.startsWith('result_')) {
-                    const key = header.substring(7);
-                    return item.results[key] || '';
-                }
-                return '';
-            });
-            csvText += row.join(',') + '\n';
-        });
+        <div class="modal-content relative text-center">
 
-        // Use the fallback method for clipboard access
-        const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = csvText;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-        
-        try {
-            const successful = document.execCommand('copy');
-            const msg = successful ? 'CSV content copied to clipboard!' : 'Failed to copy CSV content.';
-            showMessage(msg);
-        } catch (err) {
-            showMessage('Failed to copy. Please try again.');
-        } finally {
-            document.body.removeChild(tempTextArea);
-        }
-    };
+            <button id="close-modal" class="absolute top-4 right-4 text-xl text-secondary hover:text-main">
 
-    // --- UI Functions ---
+                <i class="fas fa-times"></i>
 
-    // Show a temporary message to the user
-    const showMessage = (message, duration = 3000) => {
-        const messageBox = document.getElementById('message-box');
-        if(!messageBox) return;
-        messageBox.textContent = message;
-        messageBox.style.display = 'block';
-        messageBox.classList.add('show');
-        setTimeout(() => {
-            messageBox.classList.remove('show');
-            messageBox.style.display = 'none';
-        }, duration);
-    };
-    
-    // Help modal functionality (kept exactly as original behaviour)
-    const helpButton = document.getElementById('help-button');
-    const helpModal = document.getElementById('help-modal');
-    const closeModalButton = document.getElementById('close-modal');
+            </button>
 
-    if(helpButton){
-      helpButton.addEventListener('click', () => {
-          helpModal.style.display = ''; // let CSS handle visibility via classes
-          helpModal.classList.remove('hidden');
-          setTimeout(() => { helpModal.classList.add('active'); helpModal.style.display = 'flex'; }, 10);
-      });
-    }
-    if(closeModalButton){
-      closeModalButton.addEventListener('click', () => {
-          helpModal.classList.remove('active');
-          setTimeout(() => {
-              helpModal.classList.add('hidden');
-              helpModal.style.display = 'none';
-          }, 300);
-      });
-    }
+            <h2 class="text-2xl font-bold mb-4">How It Works</h2>
 
-    // Close modal when clicking outside
-    if(helpModal){
-      helpModal.addEventListener('click', (e) => {
-          if (e.target.id === 'help-modal') {
-              helpModal.classList.remove('active');
-              setTimeout(() => {
-                  helpModal.classList.add('hidden');
-                  helpModal.style.display = 'none';
-              }, 300);
-          }
-      });
-    }
+            <p class="text-lg text-secondary mb-4">
 
-    // Initial rendering on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        // Add event listeners for tab navigation
-        const tabNav = document.getElementById('tab-navigation');
-        if(tabNav){
-          tabNav.addEventListener('click', (e) => {
-              if (e.target.classList.contains('tab-button')) {
-                  const sheetName = e.target.dataset.sheet;
-                  renderSheet(sheetName);
-              }
-          });
-        }
+                This is a trading rules calculator. It helps you quickly determine key trading points based on specific formulas.
 
-        // Render the default tab (Umbrella) on page load
-        renderSheet('Umbrella');
-    });
-  </script>
-  <!-- ====== END original script block ====== -->
+            </p>
 
-</body>
-</html>
+            <ul class="text-left space-y-2 text-secondary text-sm sm:text-base">
+
+                <li><strong class="text-main">Tabs:</strong> Each tab represents a different trading rule with its own unique calculation. The History tab shows all your saved data.</li>
+
+                <li><strong class="text-main">Input Fields:</strong> Enter the required values (High, Low, etc.) for the selected rule.</li>
+
+                <li><strong class="text-main">Results:</strong> The calculated results will appear automatically as you type or press 'Enter'.</li>
+
+                <li><strong class="text-main">History:</strong> Save calculations for later and manage your saved data in the new History tab.</li>
+
+                <li><strong class="text-main">CSV Options:</strong> In the History tab, you can export all your saved calculations as a single CSV file or copy them to your clipboard.</li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Message Box -->
+
+    <div id="message-box" class="message-box"></div>
+
+
+
+    <script>
+
+        // Store sheet content HTML templates
+
+        const sheets = {
+
+            Umbrella: {
+
+                content: `
+
+                    <div class="bg-umbrella p-6 sm:p-8 rounded-lg">
+
+                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-umbrella">Umbrella (Daily Candle)</h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div class="input-field" data-label="Previous Day High" data-id="umbrella-high"></div>
+
+                            <div class="input-field" data-label="Previous Day Low" data-id="umbrella-low"></div>
+
+                            <div class="result-field" data-label="Range (High - Low)" data-id="umbrella-range"></div>
+
+                            <div class="result-field" data-label="&quot;X&quot; (Range * 26.11%)" data-id="umbrella-x"></div>
+
+                            <div class="result-field" data-label="High - &quot;X&quot;" data-id="umbrella-high-minus-x"></div>
+
+                            <div class="result-field" data-label="Low + &quot;X&quot;" data-id="umbrella-low-plus-x"></div>
+
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-6">
+
+                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                <i class="fas fa-save"></i> Save Calculation
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `,
+
+                calculate: () => {
+
+                    const high = parseFloat(document.getElementById('umbrella-high').value);
+
+                    const low = parseFloat(document.getElementById('umbrella-low').value);
+
+                    const results = {
+
+                        high: high,
+
+                        low: low,
+
+                        range: '-',
+
+                        x: '-',
+
+                        highMinusX: '-',
+
+                        lowPlusX: '-'
+
+                    };
+
+
+
+                    if (!isNaN(high) && !isNaN(low)) {
+
+                        results.range = high - low;
+
+                        results.x = results.range * 0.2611;
+
+                        results.highMinusX = high - results.x;
+
+                        results.lowPlusX = low + results.x;
+
+
+
+                        document.getElementById('umbrella-range').textContent = results.range.toFixed(2);
+
+                        document.getElementById('umbrella-x').textContent = results.x.toFixed(2);
+
+                        document.getElementById('umbrella-high-minus-x').textContent = results.highMinusX.toFixed(2);
+
+                        document.getElementById('umbrella-low-plus-x').textContent = results.lowPlusX.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('umbrella-range').textContent = '-';
+
+                        document.getElementById('umbrella-x').textContent = '-';
+
+                        document.getElementById('umbrella-high-minus-x').textContent = '-';
+
+                        document.getElementById('umbrella-low-plus-x').textContent = '-';
+
+                    }
+
+                    return results;
+
+                }
+
+            },
+
+            Bike: {
+
+                content: `
+
+                    <div class="bg-bike p-6 sm:p-8 rounded-lg">
+
+                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-bike">Bike (1/2 Day Candle, 195 Minutes)</h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div class="input-field" data-label="High" data-id="bike-high"></div>
+
+                            <div class="input-field" data-label="Low" data-id="bike-low"></div>
+
+                            <div class="result-field" data-label="SQRT(High) &quot;X&quot;" data-id="bike-sqrt-high-x"></div>
+
+                            <div class="result-field" data-label="Ding Ding (from &quot;X&quot;)" data-id="bike-ding-ding-x"></div>
+
+                            <div class="result-field" data-label="High + Ding Ding" data-id="bike-high-plus-ding"></div>
+
+                            <div class="result-field" data-label="SQRT(Low) &quot;Y&quot;" data-id="bike-sqrt-low-y"></div>
+
+                            <div class="result-field" data-label="Ding Ding (from &quot;Y&quot;)" data-id="bike-ding-ding-y"></div>
+
+                            <div class="result-field" data-label="Low - Ding Ding" data-id="bike-low-minus-ding"></div>
+
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-6">
+
+                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                <i class="fas fa-save"></i> Save Calculation
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `,
+
+                calculate: () => {
+
+                    const high = parseFloat(document.getElementById('bike-high').value);
+
+                    const low = parseFloat(document.getElementById('bike-low').value);
+
+                    const results = {
+
+                        high: high,
+
+                        low: low,
+
+                        sqrtHighX: '-',
+
+                        dingDingX: '-',
+
+                        highPlusDingDing: '-',
+
+                        sqrtLowY: '-',
+
+                        dingDingY: '-',
+
+                        lowMinusDingDing: '-'
+
+                    };
+
+
+
+                    if (!isNaN(high) && !isNaN(low) && high >= 0 && low >= 0) {
+
+                        results.sqrtHighX = Math.sqrt(high);
+
+                        results.dingDingX = results.sqrtHighX * 0.2611;
+
+                        results.highPlusDingDing = high + results.dingDingX;
+
+
+
+                        results.sqrtLowY = Math.sqrt(low);
+
+                        results.dingDingY = results.sqrtLowY * 0.2611;
+
+                        results.lowMinusDingDing = low - results.dingDingY;
+
+
+
+                        document.getElementById('bike-sqrt-high-x').textContent = results.sqrtHighX.toFixed(2);
+
+                        document.getElementById('bike-ding-ding-x').textContent = results.dingDingX.toFixed(2);
+
+                        document.getElementById('bike-high-plus-ding').textContent = results.highPlusDingDing.toFixed(2);
+
+                        document.getElementById('bike-sqrt-low-y').textContent = results.sqrtLowY.toFixed(2);
+
+                        document.getElementById('bike-ding-ding-y').textContent = results.dingDingY.toFixed(2);
+
+                        document.getElementById('bike-low-minus-ding').textContent = results.lowMinusDingDing.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('bike-sqrt-high-x').textContent = '-';
+
+                        document.getElementById('bike-ding-ding-x').textContent = '-';
+
+                        document.getElementById('bike-high-plus-ding').textContent = '-';
+
+                        document.getElementById('bike-sqrt-low-y').textContent = '-';
+
+                        document.getElementById('bike-ding-ding-y').textContent = '-';
+
+                        document.getElementById('bike-low-minus-ding').textContent = '-';
+
+                    }
+
+                    return results;
+
+                }
+
+            },
+
+            Rikshaw: {
+
+                content: `
+
+                    <div class="bg-rikshaw p-6 sm:p-8 rounded-lg">
+
+                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-rikshaw">Rikshaw (5 Minutes Candle)</h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div class="input-field" data-label="1st 5 Min Candles High" data-id="rikshaw-high"></div>
+
+                            <div class="input-field" data-label="1st 5 Min Candles Low" data-id="rikshaw-low"></div>
+
+                            <div class="result-field" data-label="High + 0.2611%" data-id="rikshaw-high-plus-26"></div>
+
+                            <div class="result-field" data-label="High + 0.1306%" data-id="rikshaw-high-plus-13"></div>
+
+                            <div class="result-field" data-label="Low - 0.2611%" data-id="rikshaw-low-minus-26"></div>
+
+                            <div class="result-field" data-label="Low - 0.1306%" data-id="rikshaw-low-minus-13"></div>
+
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-6">
+
+                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                <i class="fas fa-save"></i> Save Calculation
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `,
+
+                calculate: () => {
+
+                    const high = parseFloat(document.getElementById('rikshaw-high').value);
+
+                    const low = parseFloat(document.getElementById('rikshaw-low').value);
+
+                    const results = {
+
+                        high: high,
+
+                        low: low,
+
+                        highPlus26: '-',
+
+                        highPlus13: '-',
+
+                        lowMinus26: '-',
+
+                        lowMinus13: '-'
+
+                    };
+
+
+
+                    if (!isNaN(high) && !isNaN(low)) {
+
+                        results.highPlus26 = high * (1 + 0.002611);
+
+                        results.highPlus13 = high * (1 + 0.001306);
+
+                        results.lowMinus26 = low * (1 - 0.002611);
+
+                        results.lowMinus13 = low * (1 - 0.001306);
+
+
+
+                        document.getElementById('rikshaw-high-plus-26').textContent = results.highPlus26.toFixed(2);
+
+                        document.getElementById('rikshaw-high-plus-13').textContent = results.highPlus13.toFixed(2);
+
+                        document.getElementById('rikshaw-low-minus-26').textContent = results.lowMinus26.toFixed(2);
+
+                        document.getElementById('rikshaw-low-minus-13').textContent = results.lowMinus13.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('rikshaw-high-plus-26').textContent = '-';
+
+                        document.getElementById('rikshaw-high-plus-13').textContent = '-';
+
+                        document.getElementById('rikshaw-low-minus-26').textContent = '-';
+
+                        document.getElementById('rikshaw-low-minus-13').textContent = '-';
+
+                    }
+
+                    return results;
+
+                }
+
+            },
+
+            Car: {
+
+                content: `
+
+                    <div class="bg-car p-6 sm:p-8 rounded-lg">
+
+                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-car">Car (5 Minutes Candle, 1 Hour Time Frame)</h2>
+
+                        <p class="text-secondary mb-4">
+
+                            This rule calculates the midpoint and a percentage range for your trading points.
+
+                        </p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div class="input-field" data-label="1130-1230 High" data-id="car-high"></div>
+
+                            <div class="input-field" data-label="1130-1230 Low" data-id="car-low"></div>
+
+                            <div class="result-field" data-label="Midpoint (High + Low) / 2" data-id="car-midpoint"></div>
+
+                            <div class="result-field" data-label="1.5% Above Midpoint" data-id="car-above"></div>
+
+                            <div class="result-field" data-label="1.5% Below Midpoint" data-id="car-below"></div>
+
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-6">
+
+                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                <i class="fas fa-save"></i> Save Calculation
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `,
+
+                calculate: () => {
+
+                    const high = parseFloat(document.getElementById('car-high').value);
+
+                    const low = parseFloat(document.getElementById('car-low').value);
+
+                    const results = {
+
+                        high: high,
+
+                        low: low,
+
+                        midpoint: '-',
+
+                        above: '-',
+
+                        below: '-'
+
+                    };
+
+
+
+                    if (!isNaN(high) && !isNaN(low)) {
+
+                        results.midpoint = (high + low) / 2;
+
+                        results.above = results.midpoint * 1.015; // 1.5% above
+
+                        results.below = results.midpoint * 0.985; // 1.5% below
+
+
+
+                        document.getElementById('car-midpoint').textContent = results.midpoint.toFixed(2);
+
+                        document.getElementById('car-above').textContent = results.above.toFixed(2);
+
+                        document.getElementById('car-below').textContent = results.below.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('car-midpoint').textContent = '-';
+
+                        document.getElementById('car-above').textContent = '-';
+
+                        document.getElementById('car-below').textContent = '-';
+
+                    }
+
+                    return results;
+
+                }
+
+            },
+
+            Pandavas: {
+
+                content: `
+
+                    <div class="bg-pandavas p-6 sm:p-8 rounded-lg">
+
+                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-pandavas">Pandavas (1/2 Day Candle, 195 Minutes)</h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                            <div class="space-y-4">
+
+                                <h3 class="text-lg font-bold text-pandavas">1st Half Values</h3>
+
+                                <div class="input-field" data-label="Yesterday's 1st Half High" data-id="pandavas-first-high"></div>
+
+                                <div class="input-field" data-label="Yesterday's 1st Half Low" data-id="pandavas-first-low"></div>
+
+                                <div class="input-field" data-label="Yesterday's 1st Half Close" data-id="pandavas-first-close"></div>
+
+                            </div>
+
+                            <div class="space-y-4">
+
+                                <h3 class="text-lg font-bold text-pandavas">2nd Half Values</h3>
+
+                                <div class="input-field" data-label="Yesterday's 2nd Half High" data-id="pandavas-second-high"></div>
+
+                                <div class="input-field" data-label="Yesterday's 2nd Half Low" data-id="pandavas-second-low"></div>
+
+                                <div class="input-field" data-label="Yesterday's 2nd Half Close" data-id="pandavas-second-close"></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t-2 border-pandavas grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div class="result-field" data-label="Average 1 (Pivot)" data-id="pandavas-avg1"></div>
+
+                            <div class="result-field" data-label="Average 2 (Pivot)" data-id="pandavas-avg2"></div>
+
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-6">
+
+                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                <i class="fas fa-save"></i> Save Calculation
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `,
+
+                calculate: () => {
+
+                    const values1 = [
+
+                        parseFloat(document.getElementById('pandavas-first-high').value),
+
+                        parseFloat(document.getElementById('pandavas-first-low').value),
+
+                        parseFloat(document.getElementById('pandavas-first-close').value)
+
+                    ];
+
+                    const values2 = [
+
+                        parseFloat(document.getElementById('pandavas-second-high').value),
+
+                        parseFloat(document.getElementById('pandavas-second-low').value),
+
+                        parseFloat(document.getElementById('pandavas-second-close').value)
+
+                    ];
+
+                    const results = {
+
+                        firstHalf: { high: values1[0], low: values1[1], close: values1[2] },
+
+                        secondHalf: { high: values2[0], low: values2[1], close: values2[2] },
+
+                        avg1: '-',
+
+                        avg2: '-'
+
+                    };
+
+
+
+                    const validValues1 = values1.filter(val => !isNaN(val));
+
+                    if (validValues1.length === 3) {
+
+                        const sum = validValues1.reduce((acc, current) => acc + current, 0);
+
+                        results.avg1 = sum / 3;
+
+                        document.getElementById('pandavas-avg1').textContent = results.avg1.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('pandavas-avg1').textContent = '-';
+
+                    }
+
+
+
+                    const validValues2 = values2.filter(val => !isNaN(val));
+
+                    if (validValues2.length === 3) {
+
+                        const sum = validValues2.reduce((acc, current) => acc + current, 0);
+
+                        results.avg2 = sum / 3;
+
+                        document.getElementById('pandavas-avg2').textContent = results.avg2.toFixed(2);
+
+                    } else {
+
+                        document.getElementById('pandavas-avg2').textContent = '-';
+
+                    }
+
+                    return results;
+
+                }
+
+            },
+
+            History: {
+
+                content: `
+
+                    <div class="bg-container p-6 sm:p-8 rounded-lg min-h-[400px]">
+
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-main mb-4 sm:mb-0">Calculation History</h2>
+
+                            <div class="flex flex-wrap justify-center gap-2">
+
+                                <button id="history-export-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                    <i class="fas fa-file-csv"></i> Export as CSV
+
+                                </button>
+
+                                <button id="history-copy-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                    <i class="fas fa-copy"></i> Copy as CSV
+
+                                </button>
+
+                                <button id="history-clear-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
+
+                                    <i class="fas fa-trash"></i> Clear History
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div id="history-list" class="space-y-4 history-scroll-container">
+
+                            <!-- History items will be dynamically added here -->
+
+                            <p id="no-history-message" class="text-center text-secondary">No saved calculations yet.</p>
+
+                        </div>
+
+                    </div>
+
+                `
+
+            }
+
+        };
+
+
+
+        // Helper function to create an input field
+
+        const createInputField = (label, id, value = '') => `
+
+            <div>
+
+                <label class="block text-sm font-medium text-secondary mb-1">${label}</label>
+
+                <input
+
+                    type="number"
+
+                    id="${id}"
+
+                    value="${value}"
+
+                    oninput="handleInput()"
+
+                    onkeydown="handleKeyDown(event)"
+
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 transition-colors duration-200"
+
+                    placeholder="Enter value"
+
+                />
+
+            </div>
+
+        `;
+
+
+
+        // Helper function to create a result field
+
+        const createResultField = (label, id, value = '-') => `
+
+            <div>
+
+                <label class="block text-sm font-medium text-secondary mb-1">${label}</label
