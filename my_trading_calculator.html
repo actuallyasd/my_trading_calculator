@@ -502,7 +502,7 @@
                 </div>
             </div>
         `;
-        
+
         // This function will render the current sheet and load saved input data
         const renderSheet = (sheetName) => {
             const sheetContentContainer = document.getElementById('sheet-content');
@@ -541,70 +541,75 @@
 
         // Function to load input values from local storage
         const loadSavedData = (sheetName) => {
-            const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}`));
-            if (savedData) {
-                for (const id in savedData) {
-                    const input = document.getElementById(id);
-                    if (input) {
-                        input.value = savedData[id];
-                    }
+            const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}`) || '{}');
+            for (const key in savedData) {
+                const inputElement = document.getElementById(key);
+                if (inputElement) {
+                    inputElement.value = savedData[key];
                 }
-                // Recalculate after loading data
-                if (sheets[sheetName] && sheets[sheetName].calculate) {
-                    sheets[sheetName].calculate();
+            }
+            // After loading, trigger calculation
+            if (sheets[sheetName] && sheets[sheetName].calculate) {
+                sheets[sheetName].calculate();
+            }
+        };
+
+        // Handle input change and save
+        const handleInputAndSave = () => {
+            const currentSheet = document.querySelector('.tab-button.active').dataset.sheet;
+            saveInputValues(currentSheet);
+            if (sheets[currentSheet] && sheets[currentSheet].calculate) {
+                sheets[currentSheet].calculate();
+            }
+        };
+
+        // Handle 'Enter' key press on input fields
+        const handleKeyDown = (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevents form submission
+                const inputs = Array.from(document.querySelectorAll('#sheet-content input[type="number"]'));
+                const currentIndex = inputs.indexOf(event.target);
+                if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                } else {
+                    event.target.blur(); // Unfocus after the last input
                 }
             }
         };
 
-        // Function to save the current calculation to the history
+        // Function to save a calculation to history
         const saveCalculation = (sheetName) => {
             const inputs = {};
-            document.querySelectorAll('#sheet-content input[type="number"]').forEach(input => {
-                inputs[input.id] = input.value;
+            document.querySelectorAll('#sheet-content input').forEach(input => {
+                inputs[input.id] = {
+                    label: input.previousElementSibling.textContent,
+                    value: input.value
+                };
             });
 
             const results = {};
-            document.querySelectorAll('#sheet-content .result-field > div').forEach(div => {
-                results[div.id] = div.textContent;
+            document.querySelectorAll('#sheet-content .result-field > div:last-child').forEach(result => {
+                results[result.id] = {
+                    label: result.previousElementSibling.textContent,
+                    value: result.textContent
+                };
             });
 
-            if (Object.values(inputs).some(v => v === '')) {
-                showMessage('Please fill in all input fields before saving.', 'error');
-                return;
-            }
-
-            const historyItem = {
+            const calculation = {
                 id: Date.now(),
                 sheet: sheetName,
                 date: new Date().toLocaleString(),
                 inputs: inputs,
                 results: results
             };
-            
-            let history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
-            history.unshift(historyItem); // Add to the beginning of the array
+
+            const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
+            history.unshift(calculation); // Add to the beginning of the array
             localStorage.setItem('trading-calc-history', JSON.stringify(history));
 
-            showMessage('Calculation saved to history!', 'success');
+            showToast('Calculation saved to history!');
         };
-
-        // Function to show a temporary message box
-        const showMessage = (message, type = 'info') => {
-            const messageBox = document.getElementById('message-box');
-            messageBox.textContent = message;
-            messageBox.className = 'message-box show';
-            if (type === 'success') {
-                messageBox.style.backgroundColor = '#38a169'; // Green
-            } else if (type === 'error') {
-                messageBox.style.backgroundColor = '#e53e3e'; // Red
-            } else {
-                messageBox.style.backgroundColor = '#4299e1'; // Blue
-            }
-            setTimeout(() => {
-                messageBox.classList.remove('show');
-            }, 3000);
-        };
-
+        
         // Function to render the history tab content
         const renderHistory = () => {
             const historyList = document.getElementById('history-list');
@@ -613,273 +618,220 @@
 
             historyList.innerHTML = '';
             if (history.length === 0) {
-                noHistoryMessage.classList.remove('hidden');
-                historyList.appendChild(noHistoryMessage);
+                noHistoryMessage.style.display = 'block';
             } else {
-                noHistoryMessage.classList.add('hidden');
+                noHistoryMessage.style.display = 'none';
                 history.forEach(item => {
-                    const itemElement = document.createElement('div');
-                    itemElement.className = `p-4 rounded-lg shadow-sm history-item`;
-                    itemElement.innerHTML = `
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-md font-bold text-main">${item.sheet} - ${item.date}</h4>
-                            <div class="flex gap-2">
-                                <button class="delete-history-btn p-1 text-red-500 hover:text-red-700" data-id="${item.id}">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <ul class="text-sm space-y-1 text-secondary">
-                            <li><strong class="text-main">Inputs:</strong> ${Object.entries(item.inputs).map(([key, value]) => `${key.split('-').pop()}: ${value}`).join(', ')}</li>
-                            <li><strong class="text-main">Results:</strong> ${Object.entries(item.results).map(([key, value]) => `${key.split('-').pop()}: ${value}`).join(', ')}</li>
-                        </ul>
-                    `;
-                    historyList.appendChild(itemElement);
+                    historyList.innerHTML += createHistoryItem(item);
                 });
             }
-
-            // Add event listeners for the history buttons
-            document.getElementById('history-export-csv-button').addEventListener('click', exportCsv);
-            document.getElementById('history-copy-csv-button').addEventListener('click', copyCsv);
+            
+            // Add listeners to history buttons
+            document.getElementById('history-export-csv-button').addEventListener('click', exportToCSV);
+            document.getElementById('history-copy-csv-button').addEventListener('click', copyToClipboard);
             document.getElementById('history-clear-button').addEventListener('click', clearHistory);
-            document.querySelectorAll('.delete-history-btn').forEach(button => {
-                button.addEventListener('click', (e) => deleteHistoryItem(e.currentTarget.dataset.id));
-            });
         };
 
-        // Function to handle tab clicks
-        const handleTabClick = (event) => {
-            const sheetName = event.target.dataset.sheet;
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            renderSheet(sheetName);
+        // Helper function to create a history item HTML
+        const createHistoryItem = (item) => {
+            const inputHtml = Object.keys(item.inputs).map(key => {
+                const input = item.inputs[key];
+                return `<div class="text-sm"><span class="font-medium text-main">${input.label}:</span> <span class="text-secondary">${input.value}</span></div>`;
+            }).join('');
+
+            const resultHtml = Object.keys(item.results).map(key => {
+                const result = item.results[key];
+                return `<div class="text-sm"><span class="font-medium text-main">${result.label}:</span> <span class="text-secondary">${result.value}</span></div>`;
+            }).join('');
+
+            return `
+                <div class="history-item p-4 rounded-lg bg-gray-800 border border-gray-700 flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <div class="text-lg font-bold text-blue-400">${item.sheet}</div>
+                        <div class="text-sm text-gray-400">${item.date}</div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Inputs</h4>
+                            ${inputHtml}
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Results</h4>
+                            ${resultHtml}
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button onclick="deleteHistoryItem(${item.id})" class="p-2 text-red-500 hover:text-red-700 transition-colors duration-200">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Function to delete a history item
+        const deleteHistoryItem = (id) => {
+            let history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('trading-calc-history', JSON.stringify(history));
+            renderHistory(); // Re-render the history list
+            showToast('Calculation deleted!');
         };
         
-        // Function to handle input changes and trigger calculation
-        const handleInputAndSave = () => {
-            const activeTab = document.querySelector('.tab-button.active');
-            if (activeTab && activeTab.dataset.sheet !== 'History') {
-                const sheetName = activeTab.dataset.sheet;
-                if (sheets[sheetName] && sheets[sheetName].calculate) {
-                    sheets[sheetName].calculate();
-                    saveInputValues(sheetName);
-                }
-            }
+        // Function to clear all history
+        const clearHistory = () => {
+            localStorage.removeItem('trading-calc-history');
+            renderHistory();
+            showToast('History cleared!');
         };
-
-        // Function to handle Enter key press for calculation
-        const handleKeyDown = (event) => {
-            if (event.key === 'Enter') {
-                handleInputAndSave();
-            }
-        };
-
-        // Function to toggle between light and dark themes
-        const toggleTheme = () => {
-            const body = document.body;
-            const themeToggleIcon = document.getElementById('toggle-icon');
-            const currentTheme = body.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
-                body.setAttribute('data-theme', 'light');
-                themeToggleIcon.classList.remove('fa-sun');
-                themeToggleIcon.classList.add('fa-moon');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                themeToggleIcon.classList.remove('fa-moon');
-                themeToggleIcon.classList.add('fa-sun');
-            }
-        };
-
-        // Function to export history as a CSV file
-        const exportCsv = () => {
+        
+        // Function to export history to CSV
+        const exportToCSV = () => {
             const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
             if (history.length === 0) {
-                showMessage('No history to export.', 'error');
+                showToast('No history to export!');
                 return;
             }
 
             let csvContent = "data:text/csv;charset=utf-8,";
             
-            // Get all unique headers from all history items
-            const allHeaders = new Set(['Date', 'Sheet']);
+            // Add headers
+            let headers = ['Sheet', 'Date'];
+            const allKeys = new Set();
             history.forEach(item => {
-                Object.keys(item.inputs).forEach(key => allHeaders.add(key.replace(/trading-calc-/g, '')));
-                Object.keys(item.results).forEach(key => allHeaders.add(key.replace(/trading-calc-/g, '')));
+                Object.keys(item.inputs).forEach(key => allKeys.add(item.inputs[key].label));
+                Object.keys(item.results).forEach(key => allKeys.add(item.results[key].label));
+            });
+            headers = headers.concat(Array.from(allKeys));
+            csvContent += headers.map(h => `"${h}"`).join(',') + "\n";
+            
+            // Add rows
+            history.forEach(item => {
+                const row = [item.sheet, item.date];
+                const data = { ...item.inputs, ...item.results };
+                headers.slice(2).forEach(header => {
+                    const value = Object.values(data).find(d => d.label === header)?.value || '';
+                    row.push(value);
+                });
+                csvContent += row.map(v => `"${v}"`).join(',') + "\n";
             });
 
-            // Create CSV header row
-            const headers = Array.from(allHeaders);
-            csvContent += headers.map(h => `"${h}"`).join(',') + '\n';
-            
-            // Create CSV content rows
-            history.forEach(item => {
-                const row = headers.map(header => {
-                    let value = '';
-                    // Check if the header exists in inputs or results
-                    if (header in item.inputs) {
-                        value = item.inputs[header];
-                    } else if (header in item.results) {
-                        value = item.results[header];
-                    } else if (header === 'Date') {
-                        value = item.date;
-                    } else if (header === 'Sheet') {
-                        value = item.sheet;
-                    }
-                    return `"${value}"`;
-                }).join(',');
-                csvContent += row + '\n';
-            });
-            
             const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'trading_history.csv');
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "trading_rules_history.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showMessage('History exported as CSV!', 'success');
+            showToast('History exported as CSV!');
         };
 
-        // Function to copy history to clipboard as CSV
-        const copyCsv = () => {
+        // Function to copy history to clipboard
+        const copyToClipboard = () => {
             const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
             if (history.length === 0) {
-                showMessage('No history to copy.', 'error');
+                showToast('No history to copy!');
                 return;
             }
-
-            let csvContent = "";
             
-            // Get all unique headers from all history items
-            const allHeaders = new Set(['Date', 'Sheet']);
+            let csvString = '';
+            
+            // Add headers
+            let headers = ['Sheet', 'Date'];
+            const allKeys = new Set();
             history.forEach(item => {
-                Object.keys(item.inputs).forEach(key => allHeaders.add(key.replace(/trading-calc-/g, '')));
-                Object.keys(item.results).forEach(key => allHeaders.add(key.replace(/trading-calc-/g, '')));
+                Object.keys(item.inputs).forEach(key => allKeys.add(item.inputs[key].label));
+                Object.keys(item.results).forEach(key => allKeys.add(item.results[key].label));
+            });
+            headers = headers.concat(Array.from(allKeys));
+            csvString += headers.map(h => `"${h}"`).join(',') + "\n";
+            
+            // Add rows
+            history.forEach(item => {
+                const row = [item.sheet, item.date];
+                const data = { ...item.inputs, ...item.results };
+                headers.slice(2).forEach(header => {
+                    const value = Object.values(data).find(d => d.label === header)?.value || '';
+                    row.push(value);
+                });
+                csvString += row.map(v => `"${v}"`).join(',') + "\n";
             });
 
-            // Create CSV header row
-            const headers = Array.from(allHeaders);
-            csvContent += headers.map(h => `"${h}"`).join(',') + '\n';
-            
-            // Create CSV content rows
-            history.forEach(item => {
-                const row = headers.map(header => {
-                    let value = '';
-                    if (header in item.inputs) {
-                        value = item.inputs[header];
-                    } else if (header in item.results) {
-                        value = item.results[header];
-                    } else if (header === 'Date') {
-                        value = item.date;
-                    } else if (header === 'Sheet') {
-                        value = item.sheet;
-                    }
-                    return `"${value}"`;
-                }).join(',');
-                csvContent += row + '\n';
-            });
-
-            // Using a temporary textarea to copy to clipboard
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = csvContent;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-            showMessage('History copied to clipboard!', 'success');
-        };
-
-        // Function to clear all history
-        const clearHistory = () => {
-            if (window.confirm('Are you sure you want to clear all history? This cannot be undone.')) {
-                localStorage.removeItem('trading-calc-history');
-                renderHistory();
-                showMessage('History has been cleared.', 'success');
+            try {
+                // Use the older, more reliable method for iframes
+                const el = document.createElement('textarea');
+                el.value = csvString;
+                el.setAttribute('readonly', '');
+                el.style.position = 'absolute';
+                el.style.left = '-9999px';
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast('History copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy text:', err);
+                showToast('Failed to copy to clipboard.', 'error');
             }
         };
 
-        // Function to delete a single history item
-        const deleteHistoryItem = (id) => {
-            let history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
-            history = history.filter(item => item.id !== parseInt(id));
-            localStorage.setItem('trading-calc-history', JSON.stringify(history));
-            renderHistory();
-            showMessage('Calculation removed from history.', 'success');
+        // A function to display a temporary toast message
+        const showToast = (message, type = 'success') => {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = type === 'success' ? '#38a169' : '#e53e3e';
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
         };
 
-        // Helper function to create a confirmation modal (replaces alert/confirm)
-        const createModal = (title, message, onConfirm) => {
-            const modalOverlay = document.getElementById('help-modal').cloneNode(true);
-            modalOverlay.id = "confirm-modal";
-            modalOverlay.innerHTML = `
-                <div class="modal-content relative text-center">
-                    <h2 class="text-2xl font-bold mb-4 text-main">${title}</h2>
-                    <p class="text-lg text-secondary mb-6">${message}</p>
-                    <div class="flex justify-center gap-4">
-                        <button id="confirm-yes" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Yes</button>
-                        <button id="confirm-no" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">No</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modalOverlay);
-            modalOverlay.classList.remove('hidden');
-            modalOverlay.classList.add('active');
-
-            document.getElementById('confirm-yes').addEventListener('click', () => {
-                onConfirm();
-                modalOverlay.classList.remove('active');
-                setTimeout(() => modalOverlay.remove(), 300);
-            });
-
-            document.getElementById('confirm-no').addEventListener('click', () => {
-                modalOverlay.classList.remove('active');
-                setTimeout(() => modalOverlay.remove(), 300);
-            });
-        };
-
-        // Initial setup on page load
-        window.onload = () => {
-            // Set initial theme
-            const savedTheme = localStorage.getItem('trading-calc-theme') || 'dark';
-            document.body.setAttribute('data-theme', savedTheme);
-            if (savedTheme === 'light') {
-                document.getElementById('toggle-icon').classList.remove('fa-sun');
-                document.getElementById('toggle-icon').classList.add('fa-moon');
-            } else {
-                document.getElementById('toggle-icon').classList.remove('fa-moon');
-                document.getElementById('toggle-icon').classList.add('fa-sun');
-            }
-            
-            // Render the default sheet (Umbrella)
-            renderSheet('Umbrella');
-
-            // Add event listeners for tab buttons
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', handleTabClick);
-            });
-            
-            // Add event listeners for the theme toggle and help button
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-                toggleTheme();
-                localStorage.setItem('trading-calc-theme', document.body.getAttribute('data-theme'));
-            });
-            
+        // Initial setup and event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabButtons = document.querySelectorAll('#tab-navigation .tab-button');
+            const sheetContent = document.getElementById('sheet-content');
+            const themeToggle = document.getElementById('theme-toggle');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const helpButton = document.getElementById('help-button');
             const helpModal = document.getElementById('help-modal');
-            document.getElementById('help-button').addEventListener('click', () => {
-                helpModal.classList.remove('hidden');
-                setTimeout(() => helpModal.classList.add('active'), 10);
+            const closeModalButton = document.getElementById('close-modal');
+
+            // Tab functionality
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderSheet(button.dataset.sheet);
+                });
             });
-            document.getElementById('close-modal').addEventListener('click', () => {
+
+            // Theme toggle functionality
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.body.setAttribute('data-theme', newTheme);
+                toggleIcon.classList.toggle('fa-sun', newTheme === 'dark');
+                toggleIcon.classList.toggle('fa-moon', newTheme === 'light');
+            });
+
+            // Help modal functionality
+            helpButton.addEventListener('click', () => {
+                helpModal.classList.add('active');
+            });
+
+            closeModalButton.addEventListener('click', () => {
                 helpModal.classList.remove('active');
-                setTimeout(() => helpModal.classList.add('hidden'), 300);
             });
-            helpModal.addEventListener('click', (e) => {
-                if (e.target === helpModal) {
+
+            helpModal.addEventListener('click', (event) => {
+                if (event.target === helpModal) {
                     helpModal.classList.remove('active');
-                    setTimeout(() => helpModal.classList.add('hidden'), 300);
                 }
             });
-        };
+
+            // Initial render
+            renderSheet('Umbrella');
+        });
     </script>
 </body>
 </html>
