@@ -244,23 +244,32 @@
                 calculate: () => {
                     const high = parseFloat(document.getElementById('umbrella-high').value);
                     const low = parseFloat(document.getElementById('umbrella-low').value);
+                    const results = {
+                        high: high,
+                        low: low,
+                        range: '-',
+                        x: '-',
+                        highMinusX: '-',
+                        lowPlusX: '-'
+                    };
 
                     if (!isNaN(high) && !isNaN(low)) {
-                        const range = high - low;
-                        const x = range * 0.2611;
-                        const highMinusX = high - x;
-                        const lowPlusX = low + x;
+                        results.range = high - low;
+                        results.x = results.range * 0.2611;
+                        results.highMinusX = high - results.x;
+                        results.lowPlusX = low + results.x;
 
-                        document.getElementById('umbrella-range').textContent = range.toFixed(2);
-                        document.getElementById('umbrella-x').textContent = x.toFixed(2);
-                        document.getElementById('umbrella-high-minus-x').textContent = highMinusX.toFixed(2);
-                        document.getElementById('umbrella-low-plus-x').textContent = lowPlusX.toFixed(2);
+                        document.getElementById('umbrella-range').textContent = results.range.toFixed(2);
+                        document.getElementById('umbrella-x').textContent = results.x.toFixed(2);
+                        document.getElementById('umbrella-high-minus-x').textContent = results.highMinusX.toFixed(2);
+                        document.getElementById('umbrella-low-plus-x').textContent = results.lowPlusX.toFixed(2);
                     } else {
                         document.getElementById('umbrella-range').textContent = '-';
                         document.getElementById('umbrella-x').textContent = '-';
                         document.getElementById('umbrella-high-minus-x').textContent = '-';
                         document.getElementById('umbrella-low-plus-x').textContent = '-';
                     }
+                    return results;
                 }
             },
             Bike: {
@@ -287,22 +296,32 @@
                 calculate: () => {
                     const high = parseFloat(document.getElementById('bike-high').value);
                     const low = parseFloat(document.getElementById('bike-low').value);
+                    const results = {
+                        high: high,
+                        low: low,
+                        sqrtHighX: '-',
+                        dingDingX: '-',
+                        highPlusDingDing: '-',
+                        sqrtLowY: '-',
+                        dingDingY: '-',
+                        lowMinusDingDing: '-'
+                    };
 
                     if (!isNaN(high) && !isNaN(low) && high >= 0 && low >= 0) {
-                        const sqrtHighX = Math.sqrt(high);
-                        const dingDingX = sqrtHighX * 0.2611;
-                        const highPlusDingDing = high + dingDingX;
+                        results.sqrtHighX = Math.sqrt(high);
+                        results.dingDingX = results.sqrtHighX * 0.2611;
+                        results.highPlusDingDing = high + results.dingDingX;
 
-                        const sqrtLowY = Math.sqrt(low);
-                        const dingDingY = sqrtLowY * 0.2611;
-                        const lowMinusDingDing = low - dingDingY;
+                        results.sqrtLowY = Math.sqrt(low);
+                        results.dingDingY = results.sqrtLowY * 0.2611;
+                        results.lowMinusDingDing = low - results.dingDingY;
 
-                        document.getElementById('bike-sqrt-high-x').textContent = sqrtHighX.toFixed(2);
-                        document.getElementById('bike-ding-ding-x').textContent = dingDingX.toFixed(2);
-                        document.getElementById('bike-high-plus-ding').textContent = highPlusDingDing.toFixed(2);
-                        document.getElementById('bike-sqrt-low-y').textContent = sqrtLowY.toFixed(2);
-                        document.getElementById('bike-ding-ding-y').textContent = dingDingY.toFixed(2);
-                        document.getElementById('bike-low-minus-ding').textContent = lowMinusDingDing.toFixed(2);
+                        document.getElementById('bike-sqrt-high-x').textContent = results.sqrtHighX.toFixed(2);
+                        document.getElementById('bike-ding-ding-x').textContent = results.dingDingX.toFixed(2);
+                        document.getElementById('bike-high-plus-ding').textContent = results.highPlusDingDing.toFixed(2);
+                        document.getElementById('bike-sqrt-low-y').textContent = results.sqrtLowY.toFixed(2);
+                        document.getElementById('bike-ding-ding-y').textContent = results.dingDingY.toFixed(2);
+                        document.getElementById('bike-low-minus-ding').textContent = results.lowMinusDingDing.toFixed(2);
                     } else {
                         document.getElementById('bike-sqrt-high-x').textContent = '-';
                         document.getElementById('bike-ding-ding-x').textContent = '-';
@@ -311,6 +330,7 @@
                         document.getElementById('bike-ding-ding-y').textContent = '-';
                         document.getElementById('bike-low-minus-ding').textContent = '-';
                     }
+                    return results;
                 }
             },
             Rikshaw: {
@@ -335,23 +355,32 @@
                 calculate: () => {
                     const high = parseFloat(document.getElementById('rikshaw-high').value);
                     const low = parseFloat(document.getElementById('rikshaw-low').value);
+                    const results = {
+                        high: high,
+                        low: low,
+                        highPlus26: '-',
+                        highPlus13: '-',
+                        lowMinus26: '-',
+                        lowMinus13: '-'
+                    };
 
                     if (!isNaN(high) && !isNaN(low)) {
-                        const highPlus26 = high * (1 + 0.002611);
-                        const highPlus13 = high * (1 + 0.001306);
-                        const lowMinus26 = low * (1 - 0.002611);
-                        const lowMinus13 = low * (1 - 0.001306);
+                        results.highPlus26 = high * (1 + 0.002611);
+                        results.highPlus13 = high * (1 + 0.001306);
+                        results.lowMinus26 = low * (1 - 0.002611);
+                        results.lowMinus13 = low * (1 - 0.001306);
 
-                        document.getElementById('rikshaw-high-plus-26').textContent = highPlus26.toFixed(2);
-                        document.getElementById('rikshaw-high-plus-13').textContent = highPlus13.toFixed(2);
-                        document.getElementById('rikshaw-low-minus-26').textContent = lowMinus26.toFixed(2);
-                        document.getElementById('rikshaw-low-minus-13').textContent = lowMinus13.toFixed(2);
+                        document.getElementById('rikshaw-high-plus-26').textContent = results.highPlus26.toFixed(2);
+                        document.getElementById('rikshaw-high-plus-13').textContent = results.highPlus13.toFixed(2);
+                        document.getElementById('rikshaw-low-minus-26').textContent = results.lowMinus26.toFixed(2);
+                        document.getElementById('rikshaw-low-minus-13').textContent = results.lowMinus13.toFixed(2);
                     } else {
                         document.getElementById('rikshaw-high-plus-26').textContent = '-';
                         document.getElementById('rikshaw-high-plus-13').textContent = '-';
                         document.getElementById('rikshaw-low-minus-26').textContent = '-';
                         document.getElementById('rikshaw-low-minus-13').textContent = '-';
                     }
+                    return results;
                 }
             },
             Car: {
@@ -378,20 +407,28 @@
                 calculate: () => {
                     const high = parseFloat(document.getElementById('car-high').value);
                     const low = parseFloat(document.getElementById('car-low').value);
+                    const results = {
+                        high: high,
+                        low: low,
+                        midpoint: '-',
+                        above: '-',
+                        below: '-'
+                    };
 
                     if (!isNaN(high) && !isNaN(low)) {
-                        const midpoint = (high + low) / 2;
-                        const aboveMidpoint = midpoint * 1.015; // 1.5% above
-                        const belowMidpoint = midpoint * 0.985; // 1.5% below
+                        results.midpoint = (high + low) / 2;
+                        results.above = results.midpoint * 1.015; // 1.5% above
+                        results.below = results.midpoint * 0.985; // 1.5% below
 
-                        document.getElementById('car-midpoint').textContent = midpoint.toFixed(2);
-                        document.getElementById('car-above').textContent = aboveMidpoint.toFixed(2);
-                        document.getElementById('car-below').textContent = belowMidpoint.toFixed(2);
+                        document.getElementById('car-midpoint').textContent = results.midpoint.toFixed(2);
+                        document.getElementById('car-above').textContent = results.above.toFixed(2);
+                        document.getElementById('car-below').textContent = results.below.toFixed(2);
                     } else {
                         document.getElementById('car-midpoint').textContent = '-';
                         document.getElementById('car-above').textContent = '-';
                         document.getElementById('car-below').textContent = '-';
                     }
+                    return results;
                 }
             },
             Pandavas: {
@@ -428,27 +465,37 @@
                         parseFloat(document.getElementById('pandavas-first-high').value),
                         parseFloat(document.getElementById('pandavas-first-low').value),
                         parseFloat(document.getElementById('pandavas-first-close').value)
-                    ].filter(val => !isNaN(val));
-
-                    if (values1.length === 3) {
-                        const sum = values1.reduce((acc, current) => acc + current, 0);
-                        document.getElementById('pandavas-avg1').textContent = (sum / 3).toFixed(2);
-                    } else {
-                        document.getElementById('pandavas-avg1').textContent = '-';
-                    }
-
+                    ];
                     const values2 = [
                         parseFloat(document.getElementById('pandavas-second-high').value),
                         parseFloat(document.getElementById('pandavas-second-low').value),
                         parseFloat(document.getElementById('pandavas-second-close').value)
-                    ].filter(val => !isNaN(val));
+                    ];
+                    const results = {
+                        firstHalf: { high: values1[0], low: values1[1], close: values1[2] },
+                        secondHalf: { high: values2[0], low: values2[1], close: values2[2] },
+                        avg1: '-',
+                        avg2: '-'
+                    };
 
-                    if (values2.length === 3) {
-                        const sum = values2.reduce((acc, current) => acc + current, 0);
-                        document.getElementById('pandavas-avg2').textContent = (sum / 3).toFixed(2);
+                    const validValues1 = values1.filter(val => !isNaN(val));
+                    if (validValues1.length === 3) {
+                        const sum = validValues1.reduce((acc, current) => acc + current, 0);
+                        results.avg1 = sum / 3;
+                        document.getElementById('pandavas-avg1').textContent = results.avg1.toFixed(2);
+                    } else {
+                        document.getElementById('pandavas-avg1').textContent = '-';
+                    }
+
+                    const validValues2 = values2.filter(val => !isNaN(val));
+                    if (validValues2.length === 3) {
+                        const sum = validValues2.reduce((acc, current) => acc + current, 0);
+                        results.avg2 = sum / 3;
+                        document.getElementById('pandavas-avg2').textContent = results.avg2.toFixed(2);
                     } else {
                         document.getElementById('pandavas-avg2').textContent = '-';
                     }
+                    return results;
                 }
             },
             History: {
@@ -485,7 +532,7 @@
                     type="number"
                     id="${id}"
                     value="${value}"
-                    oninput="handleInputAndSave()"
+                    oninput="handleInput()"
                     onkeydown="handleKeyDown(event)"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 transition-colors duration-200"
                     placeholder="Enter value"
@@ -507,6 +554,14 @@
         const renderSheet = (sheetName) => {
             const sheetContentContainer = document.getElementById('sheet-content');
             sheetContentContainer.innerHTML = sheets[sheetName].content;
+            
+            // Set active tab button
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.sheet === sheetName) {
+                    btn.classList.add('active');
+                }
+            });
 
             if (sheetName !== 'History') {
                 // Populate input and result fields for calculation tabs
@@ -517,8 +572,8 @@
                     el.innerHTML = createResultField(el.dataset.label, el.dataset.id);
                 });
                 
-                loadSavedData(sheetName);
-
+                loadSavedInputs(sheetName);
+                
                 // Add event listener for the save button after it's rendered
                 const saveButton = document.getElementById('save-button');
                 if (saveButton) {
@@ -526,310 +581,323 @@
                 }
             } else {
                 renderHistory();
+                
+                // Add event listeners for history buttons
+                document.getElementById('history-export-csv-button').addEventListener('click', exportHistoryAsCsv);
+                document.getElementById('history-copy-csv-button').addEventListener('click', copyHistoryAsCsv);
+                document.getElementById('history-clear-button').addEventListener('click', clearHistory);
+            }
+        };
+        
+        // --- Input and Calculation Functions ---
+        let currentTimeout;
+        const handleInput = () => {
+            clearTimeout(currentTimeout);
+            currentTimeout = setTimeout(() => {
+                const activeTab = document.querySelector('.tab-button.active').dataset.sheet;
+                if (activeTab && sheets[activeTab] && sheets[activeTab].calculate) {
+                    sheets[activeTab].calculate();
+                    saveInputValues(activeTab); // Save inputs whenever they change
+                }
+            }, 300); // Debounce to prevent excessive calculation and storage
+        };
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Enter') {
+                handleInput();
             }
         };
 
-        // Function to save input values to local storage for the current sheet
+        // --- Local Storage Functions ---
+        
+        // Save input values to local storage for the current sheet
         const saveInputValues = (sheetName) => {
             const inputs = document.querySelectorAll('#sheet-content input[type="number"]');
             const data = {};
             inputs.forEach(input => {
                 data[input.id] = input.value;
             });
-            localStorage.setItem(`trading-calc-${sheetName}`, JSON.stringify(data));
+            localStorage.setItem(`trading-calc-${sheetName}-inputs`, JSON.stringify(data));
         };
 
-        // Function to load input values from local storage
-        const loadSavedData = (sheetName) => {
-            const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}`) || '{}');
-            for (const key in savedData) {
-                const inputElement = document.getElementById(key);
-                if (inputElement) {
-                    inputElement.value = savedData[key];
+        // Load input values from local storage
+        const loadSavedInputs = (sheetName) => {
+            const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}-inputs`)) || {};
+            for (const id in savedData) {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.value = savedData[id];
                 }
             }
-            // After loading, trigger calculation
+            // Trigger calculation with loaded values
             if (sheets[sheetName] && sheets[sheetName].calculate) {
                 sheets[sheetName].calculate();
             }
         };
 
-        // Handle input change and save
-        const handleInputAndSave = () => {
-            const currentSheet = document.querySelector('.tab-button.active').dataset.sheet;
-            saveInputValues(currentSheet);
-            if (sheets[currentSheet] && sheets[currentSheet].calculate) {
-                sheets[currentSheet].calculate();
-            }
-        };
-
-        // Handle 'Enter' key press on input fields
-        const handleKeyDown = (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Prevents form submission
-                const inputs = Array.from(document.querySelectorAll('#sheet-content input[type="number"]'));
-                const currentIndex = inputs.indexOf(event.target);
-                if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
-                    inputs[currentIndex + 1].focus();
-                } else {
-                    event.target.blur(); // Unfocus after the last input
-                }
-            }
-        };
-
-        // Function to save a calculation to history
+        // Save a calculation to the history
         const saveCalculation = (sheetName) => {
+            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
+            
+            // Get inputs and results from the current tab
             const inputs = {};
-            document.querySelectorAll('#sheet-content input').forEach(input => {
-                inputs[input.id] = {
-                    label: input.previousElementSibling.textContent,
-                    value: input.value
-                };
+            document.querySelectorAll('#sheet-content input[type="number"]').forEach(input => {
+                inputs[input.id.split('-')[1]] = input.value;
             });
 
             const results = {};
-            document.querySelectorAll('#sheet-content .result-field > div:last-child').forEach(result => {
-                results[result.id] = {
-                    label: result.previousElementSibling.textContent,
-                    value: result.textContent
-                };
+            document.querySelectorAll('#sheet-content .result-field > div').forEach(result => {
+                results[result.id.split('-')[1]] = result.textContent;
             });
 
-            const calculation = {
+            const currentCalc = {
                 id: Date.now(),
                 sheet: sheetName,
-                date: new Date().toLocaleString(),
+                timestamp: new Date().toLocaleString(),
                 inputs: inputs,
                 results: results
             };
 
-            const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
-            history.unshift(calculation); // Add to the beginning of the array
+            history.unshift(currentCalc); // Add to the beginning of the array
             localStorage.setItem('trading-calc-history', JSON.stringify(history));
-
-            showToast('Calculation saved to history!');
+            showMessage('Calculation saved to history!');
         };
         
-        // Function to render the history tab content
+        // Render the history tab content
         const renderHistory = () => {
             const historyList = document.getElementById('history-list');
             const noHistoryMessage = document.getElementById('no-history-message');
-            const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
+            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
 
-            historyList.innerHTML = '';
+            historyList.innerHTML = ''; // Clear previous content
+
             if (history.length === 0) {
-                noHistoryMessage.style.display = 'block';
+                if (noHistoryMessage) noHistoryMessage.style.display = 'block';
             } else {
-                noHistoryMessage.style.display = 'none';
+                if (noHistoryMessage) noHistoryMessage.style.display = 'none';
                 history.forEach(item => {
-                    historyList.innerHTML += createHistoryItem(item);
+                    const itemElement = document.createElement('div');
+                    itemElement.classList.add('history-item', 'p-4', 'rounded-lg', 'border', 'border-gray-600', 'flex', 'flex-col', 'gap-2');
+                    
+                    let content = `<div class="flex items-center justify-between text-secondary">
+                                    <span class="font-bold text-main">${item.sheet}</span>
+                                    <span class="text-xs sm:text-sm">${item.timestamp}</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-secondary mt-2">`;
+                    
+                    // Display inputs
+                    for (const [key, value] of Object.entries(item.inputs)) {
+                        content += `<span><strong>${key}:</strong> ${value}</span>`;
+                    }
+                    // Display results
+                    for (const [key, value] of Object.entries(item.results)) {
+                        content += `<span><strong>${key}:</strong> ${value}</span>`;
+                    }
+                    content += `</div>`;
+                    itemElement.innerHTML = content;
+                    
+                    // Add click event to load calculation
+                    itemElement.addEventListener('click', () => {
+                        loadHistoryItem(item);
+                    });
+
+                    historyList.appendChild(itemElement);
                 });
             }
+        };
+
+        const loadHistoryItem = (item) => {
+            const sheetName = item.sheet;
+            renderSheet(sheetName); // Render the correct sheet first
             
-            // Add listeners to history buttons
-            document.getElementById('history-export-csv-button').addEventListener('click', exportToCSV);
-            document.getElementById('history-copy-csv-button').addEventListener('click', copyToClipboard);
-            document.getElementById('history-clear-button').addEventListener('click', clearHistory);
-        };
+            // Wait for the sheet to be rendered before populating fields
+            setTimeout(() => {
+                // Populate inputs
+                for (const [key, value] of Object.entries(item.inputs)) {
+                    const input = document.getElementById(`${sheetName.toLowerCase()}-${key}`);
+                    if (input) input.value = value;
+                }
+                
+                // Manually trigger calculation to populate results
+                if (sheets[sheetName] && sheets[sheetName].calculate) {
+                    sheets[sheetName].calculate();
+                }
 
-        // Helper function to create a history item HTML
-        const createHistoryItem = (item) => {
-            const inputHtml = Object.keys(item.inputs).map(key => {
-                const input = item.inputs[key];
-                return `<div class="text-sm"><span class="font-medium text-main">${input.label}:</span> <span class="text-secondary">${input.value}</span></div>`;
-            }).join('');
-
-            const resultHtml = Object.keys(item.results).map(key => {
-                const result = item.results[key];
-                return `<div class="text-sm"><span class="font-medium text-main">${result.label}:</span> <span class="text-secondary">${result.value}</span></div>`;
-            }).join('');
-
-            return `
-                <div class="history-item p-4 rounded-lg bg-gray-800 border border-gray-700 flex flex-col gap-2">
-                    <div class="flex justify-between items-start">
-                        <div class="text-lg font-bold text-blue-400">${item.sheet}</div>
-                        <div class="text-sm text-gray-400">${item.date}</div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Inputs</h4>
-                            ${inputHtml}
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Results</h4>
-                            ${resultHtml}
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-2 mt-4">
-                        <button onclick="deleteHistoryItem(${item.id})" class="p-2 text-red-500 hover:text-red-700 transition-colors duration-200">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Function to delete a history item
-        const deleteHistoryItem = (id) => {
-            let history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
-            history = history.filter(item => item.id !== id);
-            localStorage.setItem('trading-calc-history', JSON.stringify(history));
-            renderHistory(); // Re-render the history list
-            showToast('Calculation deleted!');
+                showMessage(`Loaded saved calculation for ${sheetName}`);
+            }, 100);
         };
         
-        // Function to clear all history
         const clearHistory = () => {
             localStorage.removeItem('trading-calc-history');
             renderHistory();
-            showToast('History cleared!');
+            showMessage('History cleared!');
         };
-        
-        // Function to export history to CSV
-        const exportToCSV = () => {
-            const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
+
+        const exportHistoryAsCsv = () => {
+            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
             if (history.length === 0) {
-                showToast('No history to export!');
+                showMessage('No history to export.');
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,";
+            let csvContent = 'data:text/csv;charset=utf-8,';
             
-            // Add headers
-            let headers = ['Sheet', 'Date'];
-            const allKeys = new Set();
+            // Gather all possible headers
+            const headers = new Set(['sheet', 'timestamp']);
             history.forEach(item => {
-                Object.keys(item.inputs).forEach(key => allKeys.add(item.inputs[key].label));
-                Object.keys(item.results).forEach(key => allKeys.add(item.results[key].label));
+                Object.keys(item.inputs).forEach(key => headers.add(`input_${key}`));
+                Object.keys(item.results).forEach(key => headers.add(`result_${key}`));
             });
-            headers = headers.concat(Array.from(allKeys));
-            csvContent += headers.map(h => `"${h}"`).join(',') + "\n";
-            
-            // Add rows
+            const headerArray = Array.from(headers);
+            csvContent += headerArray.join(',') + '\n';
+
+            // Create rows
             history.forEach(item => {
-                const row = [item.sheet, item.date];
-                const data = { ...item.inputs, ...item.results };
-                headers.slice(2).forEach(header => {
-                    const value = Object.values(data).find(d => d.label === header)?.value || '';
-                    row.push(value);
+                const row = headerArray.map(header => {
+                    if (header === 'sheet') return item.sheet;
+                    if (header === 'timestamp') return item.timestamp;
+                    if (header.startsWith('input_')) {
+                        const key = header.substring(6);
+                        return item.inputs[key] || '';
+                    }
+                    if (header.startsWith('result_')) {
+                        const key = header.substring(7);
+                        return item.results[key] || '';
+                    }
+                    return '';
                 });
-                csvContent += row.map(v => `"${v}"`).join(',') + "\n";
+                csvContent += row.join(',') + '\n';
             });
 
             const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "trading_rules_history.csv");
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'trading_history.csv');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast('History exported as CSV!');
+            showMessage('History exported as CSV!');
         };
-
-        // Function to copy history to clipboard
-        const copyToClipboard = () => {
-            const history = JSON.parse(localStorage.getItem('trading-calc-history') || '[]');
+        
+        const copyHistoryAsCsv = () => {
+            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
             if (history.length === 0) {
-                showToast('No history to copy!');
+                showMessage('No history to copy.');
                 return;
             }
+        
+            let csvText = '';
             
-            let csvString = '';
-            
-            // Add headers
-            let headers = ['Sheet', 'Date'];
-            const allKeys = new Set();
+            const headers = new Set(['sheet', 'timestamp']);
             history.forEach(item => {
-                Object.keys(item.inputs).forEach(key => allKeys.add(item.inputs[key].label));
-                Object.keys(item.results).forEach(key => allKeys.add(item.results[key].label));
+                Object.keys(item.inputs).forEach(key => headers.add(`input_${key}`));
+                Object.keys(item.results).forEach(key => headers.add(`result_${key}`));
             });
-            headers = headers.concat(Array.from(allKeys));
-            csvString += headers.map(h => `"${h}"`).join(',') + "\n";
-            
-            // Add rows
+            const headerArray = Array.from(headers);
+            csvText += headerArray.join(',') + '\n';
+
             history.forEach(item => {
-                const row = [item.sheet, item.date];
-                const data = { ...item.inputs, ...item.results };
-                headers.slice(2).forEach(header => {
-                    const value = Object.values(data).find(d => d.label === header)?.value || '';
-                    row.push(value);
+                const row = headerArray.map(header => {
+                    if (header === 'sheet') return item.sheet;
+                    if (header === 'timestamp') return item.timestamp;
+                    if (header.startsWith('input_')) {
+                        const key = header.substring(6);
+                        return item.inputs[key] || '';
+                    }
+                    if (header.startsWith('result_')) {
+                        const key = header.substring(7);
+                        return item.results[key] || '';
+                    }
+                    return '';
                 });
-                csvString += row.map(v => `"${v}"`).join(',') + "\n";
+                csvText += row.join(',') + '\n';
             });
 
+            // Use the fallback method for clipboard access
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = csvText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
             try {
-                // Use the older, more reliable method for iframes
-                const el = document.createElement('textarea');
-                el.value = csvString;
-                el.setAttribute('readonly', '');
-                el.style.position = 'absolute';
-                el.style.left = '-9999px';
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                showToast('History copied to clipboard!');
+                const successful = document.execCommand('copy');
+                const msg = successful ? 'CSV content copied to clipboard!' : 'Failed to copy CSV content.';
+                showMessage(msg);
             } catch (err) {
-                console.error('Failed to copy text:', err);
-                showToast('Failed to copy to clipboard.', 'error');
+                showMessage('Failed to copy. Please try again.');
+            } finally {
+                document.body.removeChild(tempTextArea);
             }
         };
 
-        // A function to display a temporary toast message
-        const showToast = (message, type = 'success') => {
+        // --- UI Functions ---
+
+        // Show a temporary message to the user
+        const showMessage = (message, duration = 3000) => {
             const messageBox = document.getElementById('message-box');
             messageBox.textContent = message;
-            messageBox.style.backgroundColor = type === 'success' ? '#38a169' : '#e53e3e';
             messageBox.classList.add('show');
             setTimeout(() => {
                 messageBox.classList.remove('show');
-            }, 3000);
+            }, duration);
         };
+        
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const toggleIcon = document.getElementById('toggle-icon');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'light');
+                toggleIcon.classList.remove('fa-sun');
+                toggleIcon.classList.add('fa-moon');
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+                toggleIcon.classList.remove('fa-moon');
+                toggleIcon.classList.add('fa-sun');
+            }
+        });
 
-        // Initial setup and event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabButtons = document.querySelectorAll('#tab-navigation .tab-button');
-            const sheetContent = document.getElementById('sheet-content');
-            const themeToggle = document.getElementById('theme-toggle');
-            const toggleIcon = document.getElementById('toggle-icon');
-            const helpButton = document.getElementById('help-button');
-            const helpModal = document.getElementById('help-modal');
-            const closeModalButton = document.getElementById('close-modal');
+        // Help modal functionality
+        const helpButton = document.getElementById('help-button');
+        const helpModal = document.getElementById('help-modal');
+        const closeModalButton = document.getElementById('close-modal');
 
-            // Tab functionality
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    renderSheet(button.dataset.sheet);
-                });
-            });
-
-            // Theme toggle functionality
-            themeToggle.addEventListener('click', () => {
-                const currentTheme = document.body.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                document.body.setAttribute('data-theme', newTheme);
-                toggleIcon.classList.toggle('fa-sun', newTheme === 'dark');
-                toggleIcon.classList.toggle('fa-moon', newTheme === 'light');
-            });
-
-            // Help modal functionality
-            helpButton.addEventListener('click', () => {
+        helpButton.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+            setTimeout(() => { // Small delay to allow CSS transitions to work
                 helpModal.classList.add('active');
-            });
+            }, 10);
+        });
 
-            closeModalButton.addEventListener('click', () => {
+        closeModalButton.addEventListener('click', () => {
+            helpModal.classList.remove('active');
+            setTimeout(() => {
+                helpModal.classList.add('hidden');
+            }, 300); // Corresponds to CSS transition duration
+        });
+        
+        // Close modal when clicking outside
+        helpModal.addEventListener('click', (e) => {
+            if (e.target.id === 'help-modal') {
                 helpModal.classList.remove('active');
-            });
-
-            helpModal.addEventListener('click', (event) => {
-                if (event.target === helpModal) {
-                    helpModal.classList.remove('active');
+                setTimeout(() => {
+                    helpModal.classList.add('hidden');
+                }, 300);
+            }
+        });
+        
+        // Initial rendering on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add event listeners for tab navigation
+            document.getElementById('tab-navigation').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab-button')) {
+                    const sheetName = e.target.dataset.sheet;
+                    renderSheet(sheetName);
                 }
             });
 
-            // Initial render
+            // Render the default tab (Umbrella) on page load
             renderSheet('Umbrella');
         });
     </script>
