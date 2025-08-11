@@ -143,7 +143,7 @@
         <button class="tab-btn px-4 py-2 text-sm font-semibold active" data-sheet="Umbrella">Umbrella</button>
         <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Bike">Bike</button>
         <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Rikshaw">Rikshaw</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Car">Car</button>
+        <!-- Car tab removed -->
         <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Pandavas">Pandavas</button>
         <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="History">History</button>
         <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Notes">Notes</button>
@@ -161,16 +161,14 @@
         <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
         <!-- Single Reference button (view or upload in one) -->
         <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Reference Image</button>
-        <!-- NEW: Simulate -->
+        <!-- Simulate -->
         <button id="simulateBtn" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-gauge-high mr-2"></i>Simulate</button>
         <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
       </div>
 
-      <!-- Quick Links (below buttons, adheres to design) -->
+      <!-- Quick Links -->
       <div class="mt-5">
-        <div class="flex items-center justify-center gap-4 flex-wrap" id="qlWrap">
-          <!-- tiles render here -->
-        </div>
+        <div class="flex items-center justify-center gap-4 flex-wrap" id="qlWrap"></div>
       </div>
     </div>
 
@@ -276,9 +274,7 @@
       </div>
 
       <!-- Mirror of current tab -->
-      <div id="simWrap" class="space-y-4">
-        <!-- Inputs/results are injected based on the active tab -->
-      </div>
+      <div id="simWrap" class="space-y-4"></div>
 
       <div class="flex justify-end gap-2">
         <button id="simRun" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Recalculate</button>
@@ -438,32 +434,6 @@ const rules = {
         return {inputs:{'1st 5 Min Candles High':H,'1st 5 Min Candles Low':L}, results:{'High + 0.2611%':h26,'High + 0.1306%':h13,'Low - 0.2611%':l26,'Low - 0.1306%':l13}};
       } else {
         ['rikshaw-high-plus-26','rikshaw-high-plus-13','rikshaw-low-minus-26','rikshaw-low-minus-13'].forEach(id=>$('#'+id).textContent='-');
-        return null;
-      }
-    }
-  },
-  Car:{
-    title:'Car (5 Minutes Candle, 1 Hour Time Frame)',
-    bg:'bg-car',
-    inputs:[['1130-1230 High','car-high'],['1130-1230 Low','car-low']],
-    results:[
-      ['Midpoint (High + Low) / 2','car-midpoint'],
-      ['1.5% Above Midpoint','car-above'],
-      ['1.5% Below Midpoint','car-below'],
-    ],
-    calc(){
-      const H = parseFloat($('#car-high').value);
-      const L = parseFloat($('#car-low').value);
-      if(isFinite(H) && isFinite(L)){
-        const mid = (H+L)/2;
-        const up  = mid * 1.015;
-        const dn  = mid * 0.985;
-        $('#car-midpoint').textContent = fmt(mid);
-        $('#car-above').textContent    = fmt(up);
-        $('#car-below').textContent    = fmt(dn);
-        return {inputs:{'1130-1230 High':H,'1130-1230 Low':L}, results:{'Midpoint (High + Low) / 2':mid,'1.5% Above Midpoint':up,'1.5% Below Midpoint':dn}};
-      } else {
-        ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-');
         return null;
       }
     }
@@ -744,7 +714,7 @@ $('#tabs').addEventListener('click', (e)=>{
   setActiveTab(btn.dataset.sheet);
 });
 
-/* ========= Reference (single button) ========= */
+/* ========= Reference ========= */
 $('#refBtn').addEventListener('click', ()=> {
   $('#refPreview').src = store.refBlob || '';
   $('#refModal').showModal();
@@ -840,7 +810,6 @@ $('#qlSave').addEventListener('click', ()=>{
 
 /* ========= SIMPLE SIMULATOR ========= */
 
-/* Pure compute helpers that mirror on-page logic */
 const simCompute = {
   Umbrella(H,L){
     const range = H - L;
@@ -874,14 +843,7 @@ const simCompute = {
       'Low - 0.1306%':  L * (1 - 0.001306)
     };
   },
-  Car(H,L){
-    const mid = (H+L)/2;
-    return {
-      'Midpoint (High + Low) / 2': mid,
-      '1.5% Above Midpoint': mid * 1.015,
-      '1.5% Below Midpoint': mid * 0.985
-    };
-  },
+  // Car removed
   Pandavas(h1,l1,c1,h2,l2,c2){
     return {
       'Average 1 (Pivot)': (h1+l1+c1)/3,
@@ -896,18 +858,15 @@ function deltaPct(newVal, oldVal){
   return (p>=0?'+':'') + p.toFixed(2) + '%';
 }
 
-/* Build minimal UI inside the dialog mirroring active tab */
 function openSimulator(){
   const key = state.active;
   if(!rules[key]){ toast('Open a calculator tab first', false); return; }
 
-  // Ensure current outputs are up to date
   const current = rules[key].calc?.() || {results:{}};
   const currentResults = current.results || {};
 
   const wrap = $('#simWrap');
   if(key==='Pandavas'){
-    // Pull current inputs from the page if present
     const getVal = id => {
       const v = parseFloat($('#'+id)?.value);
       return isFinite(v)?v:'';
@@ -949,7 +908,6 @@ function openSimulator(){
     calcAndRender();
 
   } else {
-    // Generic 2-input layout
     const [labelA,idA] = rules[key].inputs[0] || ['Input A','a'];
     const [labelB,idB] = rules[key].inputs[1] || ['Input B','b'];
     const valA = (v => isFinite(v)?v:'')(parseFloat($('#'+idA)?.value));
@@ -976,7 +934,7 @@ function openSimulator(){
       if(key==='Umbrella') out = simCompute.Umbrella(a,b);
       if(key==='Bike')     out = simCompute.Bike(a,b);
       if(key==='Rikshaw')  out = simCompute.Rikshaw(a,b);
-      if(key==='Car')      out = simCompute.Car(a,b);
+      // Car removed
       renderSimResults(out, currentResults);
     };
     ['sim-a','sim-b'].forEach(id=> $('#'+id).addEventListener('input', calcAndRender));
@@ -987,7 +945,6 @@ function openSimulator(){
   $('#simulateModal').showModal();
 }
 
-/* Render rows: Simulated vs Current + Δ and Δ% */
 function renderSimResults(out, current){
   const box = $('#simResults');
   box.innerHTML = '';
@@ -1015,11 +972,10 @@ function renderSimResults(out, current){
 (function init(){
   applyTheme(store.theme);
   setDailyQuote();
-  setActiveTab('Umbrella');      // default render + handlers
+  setActiveTab('Umbrella');
   $('#analyzeBtn').addEventListener('click', analyze);
   renderQuickLinks();
 
-  // Simulator open/close
   $('#simulateBtn').addEventListener('click', openSimulator);
   document.querySelectorAll('#simulateModal [data-close]')?.forEach(b=>{
     b.addEventListener('click', ()=> $('#simulateModal').close());
