@@ -1,830 +1,722 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Rules Calculator</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .tab-button {
-            transition: all 0.3s ease-in-out;
-        }
-        [data-theme='dark'] .tab-button.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        [data-theme='light'] .tab-button.active {
-            background-color: #1f2937;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        [data-theme='dark'] .tab-button {
-            background-color: #374151;
-            color: #d1d5db;
-        }
-        [data-theme='light'] .tab-button {
-            background-color: #e5e7eb;
-            color: #4b5563;
-        }
-        [data-theme='dark'] .bg-body { background-color: #0d1117; }
-        [data-theme='light'] .bg-body { background-color: #f3f4f6; }
-        [data-theme='dark'] .bg-container { background-color: #161b22; }
-        [data-theme='light'] .bg-container { background-color: #ffffff; }
-        [data-theme='dark'] .text-main { color: #f9fafb; }
-        [data-theme='light'] .text-main { color: #1f2937; }
-        [data-theme='dark'] .text-secondary { color: #d1d5db; }
-        [data-theme='light'] .text-secondary { color: #4b5563; }
-        /* Readability fix for inputs and results */
-        [data-theme='dark'] .input-field input { background-color: #374151; color: white; border-color: #4b5563; }
-        [data-theme='light'] .input-field input { background-color: #ffffff; color: #1f2937; border-color: #d1d5db; }
-        [data-theme='dark'] .result-field > div { background-color: #4b5563; color: white; border-color: #6b7280; }
-        [data-theme='light'] .result-field > div { background-color: #e5e7eb; color: #1f2937; border-color: #d1d5db; }
-        .tab-content > div {
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trading Rules Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-        /* --- Theme-specific colors for the sheets (unchanged) --- */
-        [data-theme='dark'] .bg-umbrella { background-color: #1e3a8a; }
-        [data-theme='light'] .bg-umbrella { background-color: #dbeafe; }
-        [data-theme='dark'] .text-umbrella { color: #93c5fd; }
-        [data-theme='light'] .text-umbrella { color: #1e3a8a; }
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+  :root { --radius: 14px; }
+  body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
-        [data-theme='dark'] .bg-bike { background-color: #065f46; }
-        [data-theme='light'] .bg-bike { background-color: #dcfce7; }
-        [data-theme='dark'] .text-bike { color: #6ee7b7; }
-        [data-theme='light'] .text-bike { color: #065f46; }
+  /* Textured backgrounds */
+  body[data-theme='dark'] {
+    background:#0b0f14; color:#e5e7eb;
+    background-image:
+      radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+    background-size:8px 8px, 100% 100%;
+  }
+  body[data-theme='light'] {
+    background:#f5f7fb; color:#111827;
+    background-image:
+      radial-gradient(rgba(0,0,0,.045) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
+    background-size:10px 10px, 100% 100%;
+  }
 
-        [data-theme='dark'] .bg-rikshaw { background-color: #5b21b6; }
-        [data-theme='light'] .bg-rikshaw { background-color: #ede9fe; }
-        [data-theme='dark'] .text-rikshaw { color: #c4b5fd; }
-        [data-theme='light'] .text-rikshaw { color: #5b21b6; }
+  .surface { border-radius: var(--radius); box-shadow: 0 12px 30px rgba(2,6,23,.18); }
+  [data-theme='light'] .surface { box-shadow: 0 10px 24px rgba(2,6,23,.08); }
 
-        [data-theme='dark'] .bg-car { background-color: #991b1b; }
-        [data-theme='light'] .bg-car { background-color: #fee2e2; }
-        [data-theme='dark'] .text-car { color: #fca5a5; }
-        [data-theme='light'] .text-car { color: #991b1b; }
+  /* Inputs readable in both themes */
+  [data-theme='dark'] input[type=number], [data-theme='dark'] textarea {
+    color:#f9fafb !important; background:#1f2937 !important; border-color:#374151 !important;
+  }
+  [data-theme='light'] input[type=number], [data-theme='light'] textarea {
+    color:#111827 !important; background:#ffffff !important; border-color:#e5e7eb !important;
+  }
+  [data-theme='dark'] ::placeholder { color:#9ca3af; }
+  [data-theme='light'] ::placeholder { color:#6b7280; }
 
-        [data-theme='dark'] .bg-pandavas { background-color: #9a3412; }
-        [data-theme='light'] .bg-pandavas { background-color: #ffedd5; }
-        [data-theme='dark'] .text-pandavas { color: #fdba74; }
-        [data-theme='light'] .text-pandavas { color: #9a3412; }
+  /* Result tiles */
+  [data-theme='dark'] .result-tile { background:#141a22; border:1px solid #1f2937; color:#e5e7eb; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  [data-theme='light'] .result-tile { background:#ffffff; border:1px solid #e5e7eb; color:#111827; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+  .result-tile { border-radius:12px; transition:transform .2s ease, box-shadow .2s ease; }
+  .result-tile:hover { transform:translateY(-1px); }
 
-        /* Modal styling */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content {
-            padding: 2rem; border-radius: 1rem; max-width: 90%; width: 500px; position: relative;
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        [data-theme='dark'] .modal-content {
-            background-color: #1f2937; color: #f9fafb; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        }
-        [data-theme='light'] .modal-content {
-            background-color: #ffffff; color: #1f2937; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        .history-item { cursor: pointer; transition: background-color 0.2s; }
-        [data-theme='dark'] .history-item:hover { background-color: #2d3748; }
-        [data-theme='light'] .history-item:hover { background-color: #e5e7eb; }
+  /* Louder active tab */
+  .tab-btn { transition: all .25s ease; border-radius:9999px; position:relative; }
+  [data-theme='dark'] .tab-btn.active {
+    background:#0f172a; color:#f8fafc;
+    box-shadow:
+      0 0 0 2px rgba(99,102,241,.45),
+      0 10px 24px rgba(30,41,59,.55),
+      inset 0 0 0 1px rgba(148,163,184,.28);
+  }
+  [data-theme='light'] .tab-btn.active {
+    background:#e7eaf3; color:#0f172a;
+    box-shadow:
+      0 0 0 2px rgba(99,102,241,.25),
+      0 10px 22px rgba(0,0,0,.10),
+      inset 0 0 0 1px rgba(17,24,39,.06);
+  }
+  .tab-btn.active::after{
+    content:""; position:absolute; left:10px; right:10px; bottom:-7px; height:4px; border-radius:9999px;
+    background: linear-gradient(90deg, #38bdf8, #6366f1, #22c55e);
+    filter: drop-shadow(0 2px 6px rgba(99,102,241,.55));
+  }
 
-        .message-box {
-            position: fixed; top: 1rem; right: 1rem; padding: 1rem 1.5rem; border-radius: 0.5rem;
-            background-color: #38a169; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 1001; opacity: 0; visibility: hidden; transform: translateY(-20px);
-            transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s ease;
-        }
-        .message-box.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  /* Sheet tints (unchanged names) */
+  [data-theme='dark'] .bg-umbrella{ background:#122647;}
+  [data-theme='light'] .bg-umbrella{ background:#e8f1ff;}
+  [data-theme='dark'] .bg-bike{ background:#0f2d29;}
+  [data-theme='light'] .bg-bike{ background:#e5fbf1;}
+  [data-theme='dark'] .bg-rikshaw{ background:#261a45;}
+  [data-theme='light'] .bg-rikshaw{ background:#efe8ff;}
+  [data-theme='dark'] .bg-car{ background:#3a1111;}
+  [data-theme='light'] .bg-car{ background:#ffe8e8;}
+  [data-theme='dark'] .bg-pandavas{ background:#3a2211;}
+  [data-theme='light'] .bg-pandavas{ background:#ffefe1;}
 
-        .history-scroll-container { max-height: 500px; overflow-y: auto; }
+  /* Content transition */
+  .fade-in { opacity:0; transform:translateY(6px) scale(.995); }
+  .fade-in.ready { opacity:1; transform:translateY(0) scale(1); transition: opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
 
-        /* Textured background (subtle, keeps your colors) */
-        body[data-theme='dark']{
-            background-color:#0d1117;
-            background-image:
-                radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(255,255,255,.02), transparent);
-            background-size:8px 8px, 100% 100%;
-        }
-        body[data-theme='light']{
-            background-color:#f3f4f6;
-            background-image:
-                radial-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(0,0,0,.02), transparent);
-            background-size:10px 10px, 100% 100%;
-        }
-
-        /* Smooth crossfade for sheet content (no layout change) */
-        #sheet-content { transition: opacity .22s ease, transform .22s ease; }
-        .fade-out { opacity: 0; transform: translateY(6px); }
-        .fade-in { opacity: 1; transform: translateY(0); }
-    </style>
+  /* Toast */
+  .toast{
+    position:fixed; top:18px; right:18px; z-index:50; padding:.75rem 1rem; border-radius:12px; color:white;
+    transform: translateY(-10px); opacity:0; transition: transform .25s ease, opacity .25s ease;
+  }
+  .toast.show{ transform: translateY(0); opacity:1; }
+</style>
 </head>
-<body class="bg-body min-h-screen p-4 sm:p-8 flex flex-col items-center font-sans transition-colors duration-300" data-theme="dark">
 
-    <div class="w-full max-w-4xl bg-container rounded-xl shadow-2xl p-6 sm:p-10 transition-colors duration-300">
-        <!-- Top-right: Help / Theme / Reference Image -->
-        <div class="flex justify-end gap-2 mb-4">
-            <!-- Reference Image (no preview) -->
-            <input type="file" id="reference-input" accept="image/*" class="hidden">
-            <button id="reference-button" title="Attach reference image" class="p-2 rounded-full text-secondary hover:bg-gray-700 transition-colors duration-200">
-                <i class="fas fa-image text-xl"></i>
-            </button>
-            <button id="help-button" class="p-2 rounded-full text-secondary hover:bg-gray-700 transition-colors duration-200">
-                <i class="fas fa-question text-xl"></i>
-            </button>
-            <button id="theme-toggle" class="p-2 rounded-full text-secondary hover:bg-gray-700 transition-colors duration-200">
-                <i class="fas fa-sun text-xl" id="toggle-icon"></i>
-            </button>
+<body data-theme="dark" class="min-h-screen p-4 sm:p-6 lg:p-8">
+  <div id="toast" class="toast bg-emerald-600"></div>
+
+  <div class="max-w-5xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="surface p-4 sm:p-5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-2xl flex items-center justify-center bg-gradient-to-br from-sky-400 to-indigo-500 text-white">
+          <i class="fa-solid fa-calculator"></i>
         </div>
-
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-2 text-main">Trading Rules Calculator</h1>
-        <p class="text-center text-secondary mb-8 max-w-prose mx-auto text-sm sm:text-base">
-            Enter your values and the calculator will automatically compute the results based on the chosen rule.
-        </p>
-
-        <!-- Tab Navigation -->
-        <div id="tab-navigation" class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600 active" data-sheet="Umbrella">Umbrella</button>
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Bike">Bike</button>
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Rikshaw">Rikshaw</button>
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Car">Car</button>
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="Pandavas">Pandavas</button>
-            <button class="tab-button py-2 px-4 sm:px-6 rounded-full font-semibold hover:bg-gray-600" data-sheet="History">History</button>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-extrabold">Trading Rules Calculator</h1>
+          <p class="text-sm opacity-70">Type values — results update instantly.</p>
         </div>
-
-        <!-- Container for Sheet Content -->
-        <div id="sheet-content"></div>
-    </div>
-    
-    <!-- Telegram Link Section -->
-    <div class="w-full max-w-4xl bg-gray-800 text-white p-6 rounded-xl shadow-xl flex justify-center items-center mt-4">
-        <a href="https://t.me/Mathstrade" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-white font-semibold hover:text-indigo-400 transition-colors duration-200">
-            <i class="fab fa-telegram-plane text-2xl"></i>
-            <span class="text-lg">Connect on Telegram</span>
-        </a>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="helpBtn" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Help">
+          <i class="fa-regular fa-circle-question text-lg"></i>
+        </button>
+        <button id="settingsBtn" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Settings">
+          <i class="fa-solid fa-gear text-lg"></i>
+        </button>
+        <button id="themeToggle" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Toggle theme">
+          <i id="themeIcon" class="fa-solid fa-sun text-lg"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- Single-line Daily Quote -->
-    <div id="daily-quote" class="w-full max-w-4xl text-center text-secondary mt-3 text-sm italic">“Loading today’s trader quote…”</div>
-
-    <!-- Help Modal -->
-    <div id="help-modal" class="modal-overlay hidden">
-        <div class="modal-content relative text-center">
-            <button id="close-modal" class="absolute top-4 right-4 text-xl text-secondary hover:text-main">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2 class="text-2xl font-bold mb-4">How It Works</h2>
-            <p class="text-lg text-secondary mb-4">
-                This is a trading rules calculator. It helps you quickly determine key trading points based on specific formulas.
-            </p>
-            <ul class="text-left space-y-2 text-secondary text-sm sm:text-base">
-                <li><strong class="text-main">Tabs:</strong> Each tab represents a different trading rule with its own unique calculation. The History tab shows all your saved data.</li>
-                <li><strong class="text-main">Input Fields:</strong> Enter the required values (High, Low, etc.) for the selected rule.</li>
-                <li><strong class="text-main">Results:</strong> The calculated results will appear automatically as you type or press 'Enter'.</li>
-                <li><strong class="text-main">History:</strong> Save calculations for later and manage your saved data in the new History tab.</li>
-                <li><strong class="text-main">CSV Options:</strong> In the History tab, you can export all your saved calculations as a single CSV file or copy them to your clipboard.</li>
-            </ul>
-        </div>
+    <!-- Tabs -->
+    <div class="surface p-2 sm:p-3">
+      <div id="tabs" class="flex flex-wrap justify-center gap-2">
+        <button class="tab-btn px-4 py-2 text-sm font-semibold active" data-sheet="Umbrella">Umbrella</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Bike">Bike</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Rikshaw">Rikshaw</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Car">Car</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Pandavas">Pandavas</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="History">History</button>
+        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Notes">Notes</button>
+      </div>
     </div>
 
-    <!-- Message Box -->
-    <div id="message-box" class="message-box"></div>
+    <!-- Content -->
+    <div id="contentHost" class="surface p-4 sm:p-6"></div>
 
-    <script>
-        // Store sheet content HTML templates (unchanged design)
-        const sheets = {
-            Umbrella: {
-                content: `
-                    <div class="bg-umbrella p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-umbrella">Umbrella (Daily Candle)</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="input-field" data-label="Previous Day High" data-id="umbrella-high"></div>
-                            <div class="input-field" data-label="Previous Day Low" data-id="umbrella-low"></div>
-                            <div class="result-field" data-label="Range (High - Low)" data-id="umbrella-range"></div>
-                            <div class="result-field" data-label="&quot;X&quot; (Range * 26.11%)" data-id="umbrella-x"></div>
-                            <div class="result-field" data-label="High - &quot;X&quot;" data-id="umbrella-high-minus-x"></div>
-                            <div class="result-field" data-label="Low + &quot;X&quot;" data-id="umbrella-low-plus-x"></div>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `,
-                calculate: () => {
-                    const high = parseFloat(document.getElementById('umbrella-high').value);
-                    const low = parseFloat(document.getElementById('umbrella-low').value);
+    <!-- Utilities -->
+    <div class="surface p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button id="shareWhatsApp" class="px-4 py-2 rounded-full bg-green-500 text-white font-semibold hover:brightness-110"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</button>
+        <button id="shareTelegram" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold hover:brightness-110"><i class="fab fa-telegram-plane mr-2"></i>Telegram</button>
+        <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
+        <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Upload Reference</button>
+        <button id="viewRef" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110 hidden"><i class="fa-regular fa-eye mr-2"></i>View Reference</button>
+        <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
+      </div>
+    </div>
 
-                    if (!isNaN(high) && !isNaN(low)) {
-                        const range = high - low;
-                        const x = range * 0.2611;
-                        const highMinusX = high - x;
-                        const lowPlusX = low + x;
+    <!-- Persistent quote line -->
+    <div id="dailyQuote" class="text-center text-sm opacity-85 italic">“...”</div>
 
-                        document.getElementById('umbrella-range').textContent = range.toFixed(2);
-                        document.getElementById('umbrella-x').textContent = x.toFixed(2);
-                        document.getElementById('umbrella-high-minus-x').textContent = highMinusX.toFixed(2);
-                        document.getElementById('umbrella-low-plus-x').textContent = lowPlusX.toFixed(2);
-                        return { high, low, range, x, highMinusX, lowPlusX };
-                    } else {
-                        document.getElementById('umbrella-range').textContent = '-';
-                        document.getElementById('umbrella-x').textContent = '-';
-                        document.getElementById('umbrella-high-minus-x').textContent = '-';
-                        document.getElementById('umbrella-low-plus-x').textContent = '-';
-                        return null;
-                    }
-                }
-            },
-            Bike: {
-                content: `
-                    <div class="bg-bike p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-bike">Bike (1/2 Day Candle, 195 Minutes)</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="input-field" data-label="High" data-id="bike-high"></div>
-                            <div class="input-field" data-label="Low" data-id="bike-low"></div>
-                            <div class="result-field" data-label="SQRT(High) &quot;X&quot;" data-id="bike-sqrt-high-x"></div>
-                            <div class="result-field" data-label="Ding Ding (from &quot;X&quot;)" data-id="bike-ding-ding-x"></div>
-                            <div class="result-field" data-label="High + Ding Ding" data-id="bike-high-plus-ding"></div>
-                            <div class="result-field" data-label="SQRT(Low) &quot;Y&quot;" data-id="bike-sqrt-low-y"></div>
-                            <div class="result-field" data-label="Ding Ding (from &quot;Y&quot;)" data-id="bike-ding-ding-y"></div>
-                            <div class="result-field" data-label="Low - Ding Ding" data-id="bike-low-minus-ding"></div>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `,
-                calculate: () => {
-                    const high = parseFloat(document.getElementById('bike-high').value);
-                    const low = parseFloat(document.getElementById('bike-low').value);
+    <!-- Footer tiny -->
+    <div class="opacity-70 text-center text-xs">
+      <p>“Analyze” is offline by default. Add an OpenAI key in Settings to use their API (optional).</p>
+    </div>
+  </div>
 
-                    if (!isNaN(high) && !isNaN(low) && high >= 0 && low >= 0) {
-                        const sqrtHighX = Math.sqrt(high);
-                        const dingDingX = sqrtHighX * 0.2611;
-                        const highPlusDingDing = high + dingDingX;
+  <!-- Help Modal -->
+  <dialog id="helpModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(520px,92vw)]">
+    <div class="p-5">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-extrabold">How it works</h2>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <ul class="space-y-2 text-sm opacity-90">
+        <li>• Tabs = different rules. Enter numbers; results update instantly.</li>
+        <li>• Save Calculation adds to History. Export/Copy CSV is correctly quoted.</li>
+        <li>• Notes save locally. Reference lets you upload a local image for quick viewing.</li>
+        <li>• “Analyze” runs offline summary by default; API option is user-controlled.</li>
+      </ul>
+    </div>
+  </dialog>
 
-                        const sqrtLowY = Math.sqrt(low);
-                        const dingDingY = sqrtLowY * 0.2611;
-                        const lowMinusDingDing = low - dingDingY;
+  <!-- Settings Modal -->
+  <dialog id="settingsModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(540px,92vw)]">
+    <div class="p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-extrabold">Settings</h2>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-semibold">Theme</label>
+        <div class="flex gap-2">
+          <button id="setDark" class="px-3 py-1 rounded-lg border">Dark</button>
+          <button id="setLight" class="px-3 py-1 rounded-lg border">Light</button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-semibold">OpenAI API Key (optional)</label>
+        <input id="apiKey" type="password" placeholder="sk-..." class="w-full rounded-lg border px-3 py-2 text-sm">
+        <p class="text-xs opacity-70">Only used if you press Analyze and want online AI. Leave blank for free offline summary.</p>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
+        <button id="saveSettings" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Save</button>
+      </div>
+    </div>
+  </dialog>
 
-                        document.getElementById('bike-sqrt-high-x').textContent = sqrtHighX.toFixed(2);
-                        document.getElementById('bike-ding-ding-x').textContent = dingDingX.toFixed(2);
-                        document.getElementById('bike-high-plus-ding').textContent = highPlusDingDing.toFixed(2);
-                        document.getElementById('bike-sqrt-low-y').textContent = sqrtLowY.toFixed(2);
-                        document.getElementById('bike-ding-ding-y').textContent = dingDingY.toFixed(2);
-                        document.getElementById('bike-low-minus-ding').textContent = lowMinusDingDing.toFixed(2);
-                        return { high, low, sqrtHighX, dingDingX, highPlusDingDing, sqrtLowY, dingDingY, lowMinusDingDing };
-                    } else {
-                        document.getElementById('bike-sqrt-high-x').textContent = '-';
-                        document.getElementById('bike-ding-ding-x').textContent = '-';
-                        document.getElementById('bike-high-plus-ding').textContent = '-';
-                        document.getElementById('bike-sqrt-low-y').textContent = '-';
-                        document.getElementById('bike-ding-ding-y').textContent = '-';
-                        document.getElementById('bike-low-minus-ding').textContent = '-';
-                        return null;
-                    }
-                }
-            },
-            Rikshaw: {
-                content: `
-                    <div class="bg-rikshaw p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-rikshaw">Rikshaw (5 Minutes Candle)</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="input-field" data-label="1st 5 Min Candles High" data-id="rikshaw-high"></div>
-                            <div class="input-field" data-label="1st 5 Min Candles Low" data-id="rikshaw-low"></div>
-                            <div class="result-field" data-label="High + 0.2611%" data-id="rikshaw-high-plus-26"></div>
-                            <div class="result-field" data-label="High + 0.1306%" data-id="rikshaw-high-plus-13"></div>
-                            <div class="result-field" data-label="Low - 0.2611%" data-id="rikshaw-low-minus-26"></div>
-                            <div class="result-field" data-label="Low - 0.1306%" data-id="rikshaw-low-minus-13"></div>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `,
-                calculate: () => {
-                    const high = parseFloat(document.getElementById('rikshaw-high').value);
-                    const low = parseFloat(document.getElementById('rikshaw-low').value);
+  <!-- Reference Viewer -->
+  <dialog id="refModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(680px,95vw)]">
+    <div class="p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-extrabold">Reference Image</h2>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3">
+        <input id="refFile" type="file" accept="image/*" class="w-full rounded-lg border px-3 py-2 text-sm" />
+        <div class="rounded-xl overflow-hidden border">
+          <img id="refPreview" alt="Reference preview" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
+        </div>
+      </div>
+      <div class="flex justify-between">
+        <button id="clearRef" class="px-4 py-2 rounded-lg bg-rose-600 text-white">Clear</button>
+        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
+      </div>
+    </div>
+  </dialog>
 
-                    if (!isNaN(high) && !isNaN(low)) {
-                        const highPlus26 = high * (1 + 0.002611);
-                        const highPlus13 = high * (1 + 0.001306);
-                        const lowMinus26 = low * (1 - 0.002611);
-                        const lowMinus13 = low * (1 - 0.001306);
+<script>
+/* ========= State & Storage ========= */
+const store = {
+  get theme(){ return localStorage.getItem('trc_theme') || 'dark'; },
+  set theme(v){ localStorage.setItem('trc_theme', v); },
+  get notes(){ return localStorage.getItem('trc_notes') || ''; },
+  set notes(v){ localStorage.setItem('trc_notes', v); },
+  get refBlob(){ return localStorage.getItem('trc_ref_blob') || ''; },
+  set refBlob(v){ localStorage.setItem('trc_ref_blob', v); },
+  get apiKey(){ return localStorage.getItem('trc_api_key') || ''; },
+  set apiKey(v){ localStorage.setItem('trc_api_key', v); },
+  get history(){
+    try{ return JSON.parse(localStorage.getItem('trc_history')||'[]'); }catch{ return []; }
+  },
+  set history(arr){ localStorage.setItem('trc_history', JSON.stringify(arr||[])); },
+};
 
-                        document.getElementById('rikshaw-high-plus-26').textContent = highPlus26.toFixed(2);
-                        document.getElementById('rikshaw-high-plus-13').textContent = highPlus13.toFixed(2);
-                        document.getElementById('rikshaw-low-minus-26').textContent = lowMinus26.toFixed(2);
-                        document.getElementById('rikshaw-low-minus-13').textContent = lowMinus13.toFixed(2);
-                        return { high, low, highPlus26, highPlus13, lowMinus26, lowMinus13 };
-                    } else {
-                        document.getElementById('rikshaw-high-plus-26').textContent = '-';
-                        document.getElementById('rikshaw-high-plus-13').textContent = '-';
-                        document.getElementById('rikshaw-low-minus-26').textContent = '-';
-                        document.getElementById('rikshaw-low-minus-13').textContent = '-';
-                        return null;
-                    }
-                }
-            },
-            Car: {
-                content: `
-                    <div class="bg-car p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-car">Car (5 Minutes Candle, 1 Hour Time Frame)</h2>
-                        <p class="text-secondary mb-4">
-                            This rule calculates the midpoint and a percentage range for your trading points.
-                        </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="input-field" data-label="1130-1230 High" data-id="car-high"></div>
-                            <div class="input-field" data-label="1130-1230 Low" data-id="car-low"></div>
-                            <div class="result-field" data-label="Midpoint (High + Low) / 2" data-id="car-midpoint"></div>
-                            <div class="result-field" data-label="1.5% Above Midpoint" data-id="car-above"></div>
-                            <div class="result-field" data-label="1.5% Below Midpoint" data-id="car-below"></div>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `,
-                calculate: () => {
-                    const high = parseFloat(document.getElementById('car-high').value);
-                    const low = parseFloat(document.getElementById('car-low').value);
+const state = { active: 'Umbrella' };
 
-                    if (!isNaN(high) && !isNaN(low)) {
-                        const midpoint = (high + low) / 2;
-                        const aboveMidpoint = midpoint * 1.015; // 1.5% above
-                        const belowMidpoint = midpoint * 0.985; // 1.5% below
+function toast(msg, ok=true){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (ok ? 'bg-emerald-600':'bg-rose-600');
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=> el.classList.remove('show'), 2400);
+}
 
-                        document.getElementById('car-midpoint').textContent = midpoint.toFixed(2);
-                        document.getElementById('car-above').textContent = aboveMidpoint.toFixed(2);
-                        document.getElementById('car-below').textContent = belowMidpoint.toFixed(2);
-                        return { high, low, midpoint, aboveMidpoint, belowMidpoint };
-                    } else {
-                        document.getElementById('car-midpoint').textContent = '-';
-                        document.getElementById('car-above').textContent = '-';
-                        document.getElementById('car-below').textContent = '-';
-                        return null;
-                    }
-                }
-            },
-            Pandavas: {
-                content: `
-                    <div class="bg-pandavas p-6 sm:p-8 rounded-lg">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-pandavas">Pandavas (1/2 Day Candle, 195 Minutes)</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div class="space-y-4">
-                                <h3 class="text-lg font-bold text-pandavas">1st Half Values</h3>
-                                <div class="input-field" data-label="Yesterday's 1st Half High" data-id="pandavas-first-high"></div>
-                                <div class="input-field" data-label="Yesterday's 1st Half Low" data-id="pandavas-first-low"></div>
-                                <div class="input-field" data-label="Yesterday's 1st Half Close" data-id="pandavas-first-close"></div>
-                            </div>
-                            <div class="space-y-4">
-                                <h3 class="text-lg font-bold text-pandavas">2nd Half Values</h3>
-                                <div class="input-field" data-label="Yesterday's 2nd Half High" data-id="pandavas-second-high"></div>
-                                <div class="input-field" data-label="Yesterday's 2nd Half Low" data-id="pandavas-second-low"></div>
-                                <div class="input-field" data-label="Yesterday's 2nd Half Close" data-id="pandavas-second-close"></div>
-                            </div>
-                        </div>
-                        <div class="mt-6 pt-6 border-t-2 border-pandavas grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="result-field" data-label="Average 1 (Pivot)" data-id="pandavas-avg1"></div>
-                            <div class="result-field" data-label="Average 2 (Pivot)" data-id="pandavas-avg2"></div>
-                        </div>
-                        <div class="flex flex-wrap justify-center gap-4 mt-6">
-                            <button id="save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-save"></i> Save Calculation
-                            </button>
-                        </div>
-                    </div>
-                `,
-                calculate: () => {
-                    const values1 = [
-                        parseFloat(document.getElementById('pandavas-first-high').value),
-                        parseFloat(document.getElementById('pandavas-first-low').value),
-                        parseFloat(document.getElementById('pandavas-first-close').value)
-                    ].filter(val => !isNaN(val));
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const fmt = n => isFinite(n) ? Number(n).toFixed(2) : '-';
 
-                    if (values1.length === 3) {
-                        const sum = values1.reduce((acc, current) => acc + current, 0);
-                        document.getElementById('pandavas-avg1').textContent = (sum / 3).toFixed(2);
-                    } else {
-                        document.getElementById('pandavas-avg1').textContent = '-';
-                    }
+/* ========= Daily Quote (persistent footer) ========= */
+const quotes = [
+  'Plan the trade; trade the plan.',
+  'Profit is rented; risk is owned.',
+  'Don’t marry a bias.',
+  'Let runners run; cut losers quick.',
+  'Flat is a position.',
+  'Your edge is execution.',
+  'Clarity beats activity.'
+];
+function setDailyQuote(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(),0,0);
+  const idx = Math.floor((now - start)/86400000) % quotes.length;
+  $('#dailyQuote').textContent = '“' + quotes[idx] + '”';
+}
 
-                    const values2 = [
-                        parseFloat(document.getElementById('pandavas-second-high').value),
-                        parseFloat(document.getElementById('pandavas-second-low').value),
-                        parseFloat(document.getElementById('pandavas-second-close').value)
-                    ].filter(val => !isNaN(val));
+/* ========= Sharing ========= */
+function currentUrl(){ return location.href; }
+$('#shareWhatsApp').addEventListener('click',()=> window.open(`https://wa.me/?text=${encodeURIComponent(currentUrl())}`,'_blank'));
+$('#shareTelegram').addEventListener('click',()=> window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl())}`,'_blank'));
+$('#copyLink').addEventListener('click',()=> navigator.clipboard.writeText(currentUrl()).then(()=>toast('Link copied')));
 
-                    if (values2.length === 3) {
-                        const sum = values2.reduce((acc, current) => acc + current, 0);
-                        document.getElementById('pandavas-avg2').textContent = (sum / 3).toFixed(2);
-                    } else {
-                        document.getElementById('pandavas-avg2').textContent = '-';
-                    }
+/* ========= Rules (calculations unchanged logically) ========= */
+const rules = {
+  Umbrella: {
+    title:'Umbrella (Daily Candle)',
+    bg:'bg-umbrella',
+    inputs:[
+      ['Previous Day High','umbrella-high'],
+      ['Previous Day Low','umbrella-low'],
+    ],
+    results:[
+      ['Range (High - Low)','umbrella-range'],
+      ['"X" (Range * 26.11%)','umbrella-x'],
+      ['High - "X"','umbrella-high-minus-x'],
+      ['Low + "X"','umbrella-low-plus-x'],
+    ],
+    calc(){
+      const H = parseFloat($('#umbrella-high').value);
+      const L = parseFloat($('#umbrella-low').value);
+      if(isFinite(H) && isFinite(L)){
+        const range = H - L;
+        const x = range * 0.2611;
+        const hmx = H - x;
+        const lpx = L + x;
+        $('#umbrella-range').textContent = fmt(range);
+        $('#umbrella-x').textContent = fmt(x);
+        $('#umbrella-high-minus-x').textContent = fmt(hmx);
+        $('#umbrella-low-plus-x').textContent = fmt(lpx);
+        return {inputs:{'Previous Day High':H,'Previous Day Low':L}, results:{Range:range,'"X"':x,'High - "X"':hmx,'Low + "X"':lpx}};
+      } else {
+        ['umbrella-range','umbrella-x','umbrella-high-minus-x','umbrella-low-plus-x'].forEach(id=>$('#'+id).textContent='-');
+        return null;
+      }
+    }
+  },
+  Bike: {
+    title:'Bike (1/2 Day Candle, 195 Minutes)',
+    bg:'bg-bike',
+    inputs:[['High','bike-high'],['Low','bike-low']],
+    results:[
+      ['SQRT(High) "X"','bike-sqrt-high-x'],
+      ['Ding Ding (from "X")','bike-ding-ding-x'],
+      ['High + Ding Ding','bike-high-plus-ding'],
+      ['SQRT(Low) "Y"','bike-sqrt-low-y'],
+      ['Ding Ding (from "Y")','bike-ding-ding-y'],
+      ['Low - Ding Ding','bike-low-minus-ding'],
+    ],
+    calc(){
+      const H = parseFloat($('#bike-high').value);
+      const L = parseFloat($('#bike-low').value);
+      if(isFinite(H) && isFinite(L) && H>=0 && L>=0){
+        const x = Math.sqrt(H);
+        const dx = x * 0.2611;
+        const Hplus = H + dx;
+        const y = Math.sqrt(L);
+        const dy = y * 0.2611;
+        const Lminus = L - dy;
+        $('#bike-sqrt-high-x').textContent = fmt(x);
+        $('#bike-ding-ding-x').textContent = fmt(dx);
+        $('#bike-high-plus-ding').textContent = fmt(Hplus);
+        $('#bike-sqrt-low-y').textContent = fmt(y);
+        $('#bike-ding-ding-y').textContent = fmt(dy);
+        $('#bike-low-minus-ding').textContent = fmt(Lminus);
+        return {inputs:{High:H,Low:L}, results:{'SQRT(High) "X"':x,'Ding Ding (from "X")':dx,'High + Ding Ding':Hplus,'SQRT(Low) "Y"':y,'Ding Ding (from "Y")':dy,'Low - Ding Ding':Lminus}};
+      } else {
+        ['bike-sqrt-high-x','bike-ding-ding-x','bike-high-plus-ding','bike-sqrt-low-y','bike-ding-ding-y','bike-low-minus-ding'].forEach(id=>$('#'+id).textContent='-');
+        return null;
+      }
+    }
+  },
+  Rikshaw:{
+    title:'Rikshaw (5 Minutes Candle)',
+    bg:'bg-rikshaw',
+    inputs:[['1st 5 Min Candles High','rikshaw-high'],['1st 5 Min Candles Low','rikshaw-low']],
+    results:[
+      ['High + 0.2611%','rikshaw-high-plus-26'],
+      ['High + 0.1306%','rikshaw-high-plus-13'],
+      ['Low - 0.2611%','rikshaw-low-minus-26'],
+      ['Low - 0.1306%','rikshaw-low-minus-13'],
+    ],
+    calc(){
+      const H = parseFloat($('#rikshaw-high').value);
+      const L = parseFloat($('#rikshaw-low').value);
+      if(isFinite(H) && isFinite(L)){
+        const h26 = H * (1 + 0.002611);
+        const h13 = H * (1 + 0.001306);
+        const l26 = L * (1 - 0.002611);
+        const l13 = L * (1 - 0.001306);
+        $('#rikshaw-high-plus-26').textContent = fmt(h26);
+        $('#rikshaw-high-plus-13').textContent = fmt(h13);
+        $('#rikshaw-low-minus-26').textContent = fmt(l26);
+        $('#rikshaw-low-minus-13').textContent = fmt(l13);
+        return {inputs:{'1st 5 Min Candles High':H,'1st 5 Min Candles Low':L}, results:{'High + 0.2611%':h26,'High + 0.1306%':h13,'Low - 0.2611%':l26,'Low - 0.1306%':l13}};
+      } else {
+        ['rikshaw-high-plus-26','rikshaw-high-plus-13','rikshaw-low-minus-26','rikshaw-low-minus-13'].forEach(id=>$('#'+id).textContent='-');
+        return null;
+      }
+    }
+  },
+  Car:{
+    title:'Car (5 Minutes Candle, 1 Hour Time Frame)',
+    bg:'bg-car',
+    inputs:[['1130-1230 High','car-high'],['1130-1230 Low','car-low']],
+    results:[
+      ['Midpoint (High + Low) / 2','car-midpoint'],
+      ['1.5% Above Midpoint','car-above'],
+      ['1.5% Below Midpoint','car-below'],
+    ],
+    calc(){
+      const H = parseFloat($('#car-high').value);
+      const L = parseFloat($('#car-low').value);
+      if(isFinite(H) && isFinite(L)){
+        const mid = (H+L)/2;
+        const up  = mid * 1.015;
+        const dn  = mid * 0.985;
+        $('#car-midpoint').textContent = fmt(mid);
+        $('#car-above').textContent    = fmt(up);
+        $('#car-below').textContent    = fmt(dn);
+        return {inputs:{'1130-1230 High':H,'1130-1230 Low':L}, results:{Midpoint:mid,'1.5% Above Midpoint':up,'1.5% Below Midpoint':dn}};
+      } else {
+        ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-');
+        return null;
+      }
+    }
+  },
+  Pandavas:{
+    title:'Pandavas (1/2 Day Candle, 195 Minutes)',
+    bg:'bg-pandavas',
+    inputs:[
+      ["Yesterday's 1st Half High",'pandavas-first-high'],
+      ["Yesterday's 1st Half Low",'pandavas-first-low'],
+      ["Yesterday's 1st Half Close",'pandavas-first-close'],
+      ["Yesterday's 2nd Half High",'pandavas-second-high'],
+      ["Yesterday's 2nd Half Low",'pandavas-second-low'],
+      ["Yesterday's 2nd Half Close",'pandavas-second-close'],
+    ],
+    results:[
+      ['Average 1 (Pivot)','pandavas-avg1'],
+      ['Average 2 (Pivot)','pandavas-avg2'],
+    ],
+    calc(){
+      const v1 = ['pandavas-first-high','pandavas-first-low','pandavas-first-close'].map(id=>parseFloat($('#'+id).value));
+      const v2 = ['pandavas-second-high','pandavas-second-low','pandavas-second-close'].map(id=>parseFloat($('#'+id).value));
+      const ok1 = v1.every(x=>isFinite(x));
+      const ok2 = v2.every(x=>isFinite(x));
+      const a1 = ok1 ? (v1[0]+v1[1]+v1[2])/3 : NaN;
+      const a2 = ok2 ? (v2[0]+v2[1]+v2[2])/3 : NaN;
+      $('#pandavas-avg1').textContent = ok1 ? fmt(a1) : '-';
+      $('#pandavas-avg2').textContent = ok2 ? fmt(a2) : '-';
+      if(ok1 || ok2){
+        return {inputs:{
+          "Yesterday's 1st Half High":v1[0], "Yesterday's 1st Half Low":v1[1], "Yesterday's 1st Half Close":v1[2],
+          "Yesterday's 2nd Half High":v2[0], "Yesterday's 2nd Half Low":v2[1], "Yesterday's 2nd Half Close":v2[2],
+        }, results:{"Average 1 (Pivot)":a1, "Average 2 (Pivot)":a2}};
+      }
+      return null;
+    }
+  }
+};
 
-                    const avg1 = parseFloat(document.getElementById('pandavas-avg1').textContent);
-                    const avg2 = parseFloat(document.getElementById('pandavas-avg2').textContent);
-                    if (!isNaN(avg1) && !isNaN(avg2)) {
-                        return { values1: values1, values2: values2, avg1, avg2 };
-                    }
-                    return null;
-                }
-            },
-            History: {
-                content: `
-                    <div class="bg-container p-6 sm:p-8 rounded-lg min-h-[400px]">
-                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-main mb-4 sm:mb-0">Calculation History</h2>
-                            <div class="flex flex-wrap justify-center gap-2">
-                                <button id="history-export-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-file-csv"></i> Export as CSV
-                                </button>
-                                <button id="history-copy-csv-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-copy"></i> Copy as CSV
-                                </button>
-                                <button id="history-clear-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2">
-                                    <i class="fas fa-trash"></i> Clear History
-                                </button>
-                            </div>
-                        </div>
-                        <div id="history-list" class="space-y-4 history-scroll-container">
-                            <!-- History items will be dynamically added here -->
-                            <p id="no-history-message" class="text-center text-secondary">No saved calculations yet.</p>
-                        </div>
-                    </div>
-                `
-            }
-        };
+/* ========= Rendering ========= */
+function fieldInput(label,id){
+  return `
+    <div>
+      <label class="block text-xs font-semibold opacity-75 mb-1">${label}</label>
+      <input id="${id}" type="number" step="0.01" placeholder="Enter value"
+        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+    </div>`;
+}
+function fieldResult(label,id){
+  return `
+    <div class="result-tile p-3">
+      <div class="text-[11px] uppercase tracking-wide opacity-70">${label}</div>
+      <div id="${id}" class="text-xl font-bold mt-1">-</div>
+    </div>`;
+}
+function renderCalcSheet(key){
+  const r = rules[key];
+  const left  = r.inputs.map(([lbl,id])=>fieldInput(lbl,id)).join('');
+  const right = r.results.map(([lbl,id])=>fieldResult(lbl,id)).join('');
+  return `
+    <div class="p-3 rounded-xl ${r.bg} bg-opacity-15 fade-in">
+      <h2 class="text-lg sm:text-xl font-extrabold mb-3">${r.title}</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-3">${left}</div>
+        <div class="grid gap-3 self-start">${right}</div>
+      </div>
+      <div class="mt-4 flex justify-center">
+        <button id="saveBtn" class="px-5 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110">
+          <i class="fa-solid fa-floppy-disk mr-2"></i>Save Calculation
+        </button>
+      </div>
+    </div>`;
+}
+function renderHistory(){
+  const rows = store.history;
+  const empty = rows.length===0;
+  const body = empty ? '' : rows.map((row,i)=>{
+    const resultPairs = Object.entries(row.results).map(([k,v])=>`<span class="whitespace-nowrap"><b>${k}:</b> ${fmt(v)}</span>`).join('<br>');
+    return `
+      <tr class="border-t border-gray-700/20">
+        <td class="px-3 py-2 text-sm">${new Date(row.date).toLocaleString()}</td>
+        <td class="px-3 py-2 text-sm">${row.rule}</td>
+        <td class="px-3 py-2 text-sm">${resultPairs}</td>
+        <td class="px-3 py-2 text-center">
+          <button class="text-rose-600 hover:underline" data-del="${i}">Delete</button>
+        </td>
+      </tr>`;
+  }).join('');
+  return `
+    <div class="fade-in">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-lg sm:text-xl font-extrabold">History</h2>
+        <div class="flex gap-2">
+          <button id="exportCsv" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold">Export CSV</button>
+          <button id="copyCsv" class="px-4 py-2 rounded-full bg-gray-700 text-white font-semibold">Copy CSV</button>
+          <button id="clearHist" class="px-4 py-2 rounded-full bg-rose-600 text-white font-semibold">Clear</button>
+        </div>
+      </div>
+      <div class="rounded-xl border overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-black/5 dark:bg-white/5">
+            <tr>
+              <th class="px-3 py-2">Date</th>
+              <th class="px-3 py-2">Rule</th>
+              <th class="px-3 py-2">Results</th>
+              <th class="px-3 py-2 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="histBody">
+            ${empty?`<tr><td colspan="4" class="px-3 py-6 text-center opacity-70">No saved calculations yet.</td></tr>`:body}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+function renderNotes(){
+  return `
+    <div class="fade-in">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg sm:text-xl font-extrabold">Notes</h2>
+        <span class="text-xs opacity-70">Autosaves locally</span>
+      </div>
+      <textarea id="notesBox" class="w-full h-64 rounded-xl border px-3 py-2 text-sm" placeholder="Write your notes...">${store.notes}</textarea>
+    </div>`;
+}
 
-        // Helper function to create an input field
-        const createInputField = (label, id, value = '') => `
-            <div>
-                <label class="block text-sm font-medium text-secondary mb-1">${label}</label>
-                <input
-                    type="number"
-                    id="${id}"
-                    value="${value}"
-                    oninput="handleInput()"
-                    onkeydown="handleKeyDown(event)"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 transition-colors duration-200"
-                    placeholder="Enter value"
-                />
-            </div>
-        `;
+/* Swap content and run callback AFTER mount */
+function swapContent(html, afterMount){
+  const host = $('#contentHost');
+  host.innerHTML = html;
+  const block = host.firstElementChild;
+  requestAnimationFrame(()=> block.classList.add('ready'));
+  if(typeof afterMount === 'function'){ afterMount(); }
+}
 
-        // Helper function to create a result field
-        const createResultField = (label, id, value = '-') => `
-            <div>
-                <label class="block text-sm font-medium text-secondary mb-1">${label}</label>
-                <div id="${id}" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2 sm:text-sm font-semibold transition-colors duration-200">
-                    ${value}
-                </div>
-            </div>
-        `;
+function setActiveTab(name){
+  state.active = name;
+  $$('#tabs .tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.sheet===name));
+  if(rules[name]){
+    swapContent(renderCalcSheet(name), bindSheetHandlers);
+  } else if(name==='History'){
+    swapContent(renderHistory(), bindSheetHandlers);
+  } else if(name==='Notes'){
+    swapContent(renderNotes(), bindSheetHandlers);
+  }
+}
 
-        // Render the current sheet with a smooth crossfade
-        const renderSheet = (sheetName) => {
-            const sheetContentContainer = document.getElementById('sheet-content');
-            // Fade out
-            sheetContentContainer.classList.add('fade-out');
+/* ========= Bind per-sheet handlers (runs AFTER mount) ========= */
+function bindSheetHandlers(){
+  const key = state.active;
+  if(rules[key]){
+    // Attach live calculations
+    rules[key].inputs.forEach(([,id])=>{
+      const el = $('#'+id);
+      if(el){
+        ['input','change','paste','keyup'].forEach(evt => el.addEventListener(evt, ()=> rules[key].calc()));
+      }
+    });
+    // Save button
+    $('#saveBtn')?.addEventListener('click', ()=>{
+      const result = rules[key].calc();
+      if(!result){ toast('Please fill inputs', false); return; }
+      const row = {
+        date: new Date().toISOString(),
+        rule: rules[key].title, // human-readable
+        inputs: result.inputs,
+        results: result.results
+      };
+      const hist = store.history; hist.unshift(row); store.history = hist;
+      toast('Saved to History');
+    });
+  } else if(key==='History'){
+    $('#exportCsv')?.addEventListener('click', ()=> { downloadText('trading_history.csv', historyToCsv()); toast('CSV exported'); });
+    $('#copyCsv')?.addEventListener('click', ()=> navigator.clipboard.writeText(historyToCsv()).then(()=>toast('CSV copied')));
+    $('#clearHist')?.addEventListener('click', ()=> { if(confirm('Clear all history?')){ store.history=[]; setActiveTab('History'); toast('History cleared'); } });
+    $('#histBody')?.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-del]');
+      if(btn){
+        const idx = +btn.dataset.del;
+        const hist = store.history; hist.splice(idx,1); store.history = hist;
+        setActiveTab('History'); toast('Deleted');
+      }
+    });
+  } else if(key==='Notes'){
+    $('#notesBox')?.addEventListener('input', e=> { store.notes = e.target.value; });
+  }
+}
 
-            setTimeout(() => {
-                sheetContentContainer.innerHTML = sheets[sheetName].content;
+/* ========= CSV helpers ========= */
+function csvQuote(v){
+  if(v===null || v===undefined) return '';
+  const s = String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function historyToCsv(){
+  const rows = store.history;
+  if(!rows.length) return 'Date,Rule\n';
+  const inputKeys = new Set(), resultKeys = new Set();
+  rows.forEach(r=>{
+    Object.keys(r.inputs||{}).forEach(k=>inputKeys.add(k));
+    Object.keys(r.results||{}).forEach(k=>resultKeys.add(k));
+  });
+  const ik = Array.from(inputKeys), rk = Array.from(resultKeys);
+  const header = ['Date','Rule',...ik,...rk].map(csvQuote).join(',')+'\n';
+  const body = rows.map(r=>{
+    const line = [
+      new Date(r.date).toLocaleString(),
+      r.rule,
+      ...ik.map(k=> r.inputs?.[k] ?? ''),
+      ...rk.map(k=> isFinite(r.results?.[k]) ? Number(r.results[k]).toFixed(2) : (r.results?.[k] ?? ''))
+    ].map(csvQuote).join(',');
+    return line;
+  }).join('\n');
+  return header+body;
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
-                // Set active tab button
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.sheet === sheetName) {
-                        btn.classList.add('active');
-                    }
-                });
+/* ========= Analyze (offline; optional OpenAI) ========= */
+async function analyze(){
+  const last = store.history[0];
+  const offline = () => {
+    if(!last) return "No saved calculations yet. Save one and try again.";
+    const results = last.results || {};
+    const vals = Object.values(results).filter(v=> isFinite(v));
+    const mean = vals.length ? vals.reduce((a,b)=>a+Number(b),0)/vals.length : NaN;
+    return [
+      `Rule: ${last.rule}`,
+      `Saved: ${new Date(last.date).toLocaleString()}`,
+      `Outputs: ${vals.length} • Mean ≈ ${fmt(mean)}`,
+      `Pointers: respect stops, avoid chasing; size so a -1R loss is tolerable; only trade named setups.`,
+      `Not financial advice.`
+    ].join('\n');
+  };
+  const key = store.apiKey?.trim();
+  if(!key){ alert(offline()); return; }
+  try{
+    const prompt = `Summarize these calculator outputs and give 3 practical, risk-aware pointers (max 120 words). Return plain text. Add "Not financial advice." at end.\n\n${JSON.stringify(last,null,2)}`;
+    const res = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{role:"user", content: prompt}],
+        temperature: 0.3
+      })
+    });
+    if(!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content?.trim() || 'No response.';
+    alert(text);
+  }catch(e){
+    alert(offline());
+  }
+}
 
-                if (sheetName !== 'History') {
-                    // Populate input and result fields for calculation tabs
-                    document.querySelectorAll('#sheet-content .input-field').forEach(el => {
-                        el.innerHTML = createInputField(el.dataset.label, el.dataset.id);
-                    });
-                    document.querySelectorAll('#sheet-content .result-field').forEach(el => {
-                        el.innerHTML = createResultField(el.dataset.label, el.dataset.id);
-                    });
-                    
-                    loadSavedInputs(sheetName);
-                    
-                    // Add event listener for the save button after it's rendered
-                    const saveButton = document.getElementById('save-button');
-                    if (saveButton) {
-                        saveButton.addEventListener('click', () => saveCalculation(sheetName));
-                    }
-                } else {
-                    renderHistory();
-                }
+/* ========= Theme & Modals ========= */
+function applyTheme(t){
+  document.body.setAttribute('data-theme', t);
+  $('#themeIcon').className = 'fa-solid ' + (t==='dark'?'fa-sun':'fa-moon');
+}
+$('#themeToggle').addEventListener('click', ()=>{
+  const t = document.body.getAttribute('data-theme')==='dark'?'light':'dark';
+  applyTheme(t); store.theme=t;
+});
+$('#helpBtn').addEventListener('click', ()=> $('#helpModal').showModal());
+$('#settingsBtn').addEventListener('click', ()=> { $('#apiKey').value=store.apiKey; $('#settingsModal').showModal(); });
+$$('dialog [data-close]').forEach(b=> b.addEventListener('click', e=> e.target.closest('dialog').close()));
+$('#saveSettings').addEventListener('click', ()=>{ store.apiKey = $('#apiKey').value.trim(); toast('Settings saved'); $('#settingsModal').close(); });
+$('#setDark').addEventListener('click', ()=>{ applyTheme('dark'); store.theme='dark'; });
+$('#setLight').addEventListener('click', ()=>{ applyTheme('light'); store.theme='light'; });
 
-                // Fade in
-                sheetContentContainer.classList.remove('fade-out');
-                sheetContentContainer.classList.add('fade-in');
-                setTimeout(() => sheetContentContainer.classList.remove('fade-in'), 230);
-            }, 160);
-        };
+/* ========= Tabs ========= */
+$('#tabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab-btn'); if(!btn) return;
+  setActiveTab(btn.dataset.sheet);
+});
 
-        // --- Input and Calculation Functions ---
-        let currentTimeout;
-        const handleInput = () => {
-            clearTimeout(currentTimeout);
-            currentTimeout = setTimeout(() => {
-                const activeTab = document.querySelector('.tab-button.active').dataset.sheet;
-                if (activeTab && sheets[activeTab] && sheets[activeTab].calculate) {
-                    sheets[activeTab].calculate();
-                    saveInputValues(activeTab); // Save inputs whenever they change
-                }
-            }, 300);
-        };
+/* ========= Reference upload/view ========= */
+$('#refBtn').addEventListener('click', ()=> {
+  $('#refPreview').src = store.refBlob || '';
+  $('#refModal').showModal();
+});
+$('#refFile').addEventListener('change', (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    store.refBlob = dataUrl;
+    $('#refPreview').src = dataUrl;
+    $('#viewRef').classList.toggle('hidden', !store.refBlob);
+    toast('Reference saved');
+  };
+  reader.readAsDataURL(file);
+});
+$('#viewRef').addEventListener('click', ()=>{
+  if(!store.refBlob){ toast('No reference yet', false); return; }
+  $('#refPreview').src = store.refBlob;
+  $('#refModal').showModal();
+});
+$('#clearRef').addEventListener('click', ()=>{
+  if(confirm('Remove reference image?')){
+    store.refBlob = '';
+    $('#refPreview').src = '';
+    $('#viewRef').classList.add('hidden');
+    toast('Reference cleared');
+  }
+});
 
-        const handleKeyDown = (event) => {
-            if (event.key === 'Enter') {
-                handleInput();
-            }
-        };
-
-        // --- Local Storage Functions ---
-        const saveInputValues = (sheetName) => {
-            const inputs = document.querySelectorAll('#sheet-content input[type="number"]');
-            const data = {};
-            inputs.forEach(input => {
-                data[input.id] = input.value;
-            });
-            localStorage.setItem(`trading-calc-${sheetName}-inputs`, JSON.stringify(data));
-        };
-
-        const loadSavedInputs = (sheetName) => {
-            const savedData = JSON.parse(localStorage.getItem(`trading-calc-${sheetName}-inputs`)) || {};
-            for (const id in savedData) {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.value = savedData[id];
-                }
-            }
-            if (sheets[sheetName] && sheets[sheetName].calculate) {
-                sheets[sheetName].calculate();
-            }
-        };
-
-        // --- History Functions (same structure, cleaned CSV) ---
-        const saveCalculation = (sheetName) => {
-            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-            const inputs = {};
-            document.querySelectorAll('#sheet-content input[type="number"]').forEach(input => {
-                inputs[input.id.split('-')[1]] = input.value;
-            });
-
-            const results = {};
-            document.querySelectorAll('#sheet-content .result-field > div').forEach(result => {
-                results[result.id.split('-')[1]] = result.textContent;
-            });
-
-            const currentCalc = {
-                id: Date.now(),
-                sheet: sheetName,
-                timestamp: new Date().toLocaleString(),
-                inputs,
-                results
-            };
-
-            history.unshift(currentCalc);
-            localStorage.setItem('trading-calc-history', JSON.stringify(history));
-            showMessage('Calculation saved to history!');
-        };
-
-        const renderHistory = () => {
-            const historyList = document.getElementById('history-list');
-            const noHistoryMessage = document.getElementById('no-history-message');
-            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-
-            historyList.innerHTML = '';
-
-            if (history.length === 0) {
-                if (noHistoryMessage) noHistoryMessage.style.display = 'block';
-            } else {
-                if (noHistoryMessage) noHistoryMessage.style.display = 'none';
-                history.forEach(item => {
-                    const itemElement = document.createElement('div');
-                    itemElement.classList.add('history-item', 'p-4', 'rounded-lg', 'border', 'border-gray-600', 'flex', 'flex-col', 'gap-2');
-                    
-                    let content = `<div class="flex items-center justify-between text-secondary">
-                                    <span class="font-bold text-main">${item.sheet}</span>
-                                    <span class="text-xs sm:text-sm">${item.timestamp}</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-secondary mt-2">`;
-                    
-                    for (const [key, value] of Object.entries(item.inputs)) {
-                        content += `<span><strong>${key}:</strong> ${value}</span>`;
-                    }
-                    for (const [key, value] of Object.entries(item.results)) {
-                        content += `<span><strong>${key}:</strong> ${value}</span>`;
-                    }
-                    content += `</div>
-                                <div class="flex justify-end">
-                                    <button class="load-history-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors duration-200" data-id="${item.id}">
-                                        Load
-                                    </button>
-                                </div>`;
-                    itemElement.innerHTML = content;
-                    itemElement.querySelector('.load-history-btn').addEventListener('click', () => loadHistoryItem(item));
-                    historyList.appendChild(itemElement);
-                });
-            }
-        };
-
-        const loadHistoryItem = (item) => {
-            const sheetName = item.sheet;
-            renderSheet(sheetName);
-            setTimeout(() => {
-                for (const [key, value] of Object.entries(item.inputs)) {
-                    const input = document.getElementById(`${sheetName.toLowerCase()}-${key}`);
-                    if (input) input.value = value;
-                }
-                if (sheets[sheetName] && sheets[sheetName].calculate) {
-                    sheets[sheetName].calculate();
-                }
-                showMessage(`Loaded saved calculation for ${sheetName}`);
-            }, 120);
-        };
-        
-        const clearHistory = () => {
-            localStorage.removeItem('trading-calc-history');
-            renderHistory();
-            showMessage('History cleared!');
-        };
-
-        const exportHistoryAsCsv = () => {
-            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-            if (history.length === 0) {
-                showMessage('No history to export.');
-                return;
-            }
-
-            let csv = 'Timestamp,Sheet,Label,Value\n';
-            history.forEach(item => {
-                for (const [k,v] of Object.entries(item.inputs)) {
-                    csv += `"${item.timestamp}","${item.sheet}","${k}","${v}"\n`;
-                }
-                for (const [k,v] of Object.entries(item.results)) {
-                    if (v && v !== '-') {
-                        csv += `"${item.timestamp}","${item.sheet}","${k}","${v}"\n`;
-                    }
-                }
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'trading_history.csv';
-            document.body.appendChild(a); a.click(); a.remove();
-            URL.revokeObjectURL(url);
-            showMessage('History exported as CSV!');
-        };
-
-        const copyHistoryAsCsv = () => {
-            const history = JSON.parse(localStorage.getItem('trading-calc-history')) || [];
-            if (history.length === 0) {
-                showMessage('No history to copy.');
-                return;
-            }
-            let csv = 'Timestamp,Sheet,Label,Value\n';
-            history.forEach(item => {
-                for (const [k,v] of Object.entries(item.inputs)) {
-                    csv += `"${item.timestamp}","${item.sheet}","${k}","${v}"\n`;
-                }
-                for (const [k,v] of Object.entries(item.results)) {
-                    if (v && v !== '-') {
-                        csv += `"${item.timestamp}","${item.sheet}","${k}","${v}"\n`;
-                    }
-                }
-            });
-            const ta = document.createElement('textarea');
-            ta.value = csv; document.body.appendChild(ta); ta.select();
-            try { document.execCommand('copy'); showMessage('CSV content copied to clipboard!'); }
-            catch { showMessage('Failed to copy.'); }
-            finally { document.body.removeChild(ta); }
-        };
-
-        // Show a temporary message to the user
-        const showMessage = (message, duration = 3000) => {
-            const messageBox = document.getElementById('message-box');
-            messageBox.textContent = message;
-            messageBox.classList.add('show');
-            setTimeout(() => { messageBox.classList.remove('show'); }, duration);
-        };
-        
-        // Theme toggle functionality
-        const themeToggle = document.getElementById('theme-toggle');
-        const toggleIcon = document.getElementById('toggle-icon');
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.body.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
-                document.body.setAttribute('data-theme', 'light');
-                toggleIcon.classList.remove('fa-sun');
-                toggleIcon.classList.add('fa-moon');
-            } else {
-                document.body.setAttribute('data-theme', 'dark');
-                toggleIcon.classList.remove('fa-moon');
-                toggleIcon.classList.add('fa-sun');
-            }
-        });
-
-        // Help modal functionality
-        const helpButton = document.getElementById('help-button');
-        const helpModal = document.getElementById('help-modal');
-        const closeModalButton = document.getElementById('close-modal');
-
-        helpButton.addEventListener('click', () => {
-            helpModal.classList.remove('hidden');
-            setTimeout(() => { helpModal.classList.add('active'); }, 10);
-        });
-
-        closeModalButton.addEventListener('click', () => {
-            helpModal.classList.remove('active');
-            setTimeout(() => { helpModal.classList.add('hidden'); }, 300);
-        });
-        
-        helpModal.addEventListener('click', (e) => {
-            if (e.target.id === 'help-modal') {
-                helpModal.classList.remove('active');
-                setTimeout(() => { helpModal.classList.add('hidden'); }, 300);
-            }
-        });
-
-        // Reference image (no preview)
-        const refBtn = document.getElementById('reference-button');
-        const refInput = document.getElementById('reference-input');
-        refBtn.addEventListener('click', () => refInput.click());
-        refInput.addEventListener('change', () => {
-            if (refInput.files && refInput.files[0]) {
-                showMessage(`Reference image selected: ${refInput.files[0].name}`);
-            }
-        });
-
-        // Daily quote (single line)
-        const initQuote = async () => {
-            const el = document.getElementById('daily-quote');
-            try {
-                const r = await fetch('https://api.quotable.io/random');
-                if (!r.ok) throw new Error('fail');
-                const d = await r.json();
-                el.textContent = `“${d.content}” — ${d.author}`;
-            } catch {
-                el.textContent = '“Plan the trade, trade the plan.” — Unknown';
-            }
-        };
-
-        // Tab click -> smooth crossfade & active highlight
-        document.getElementById('tab-navigation').addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-button')) {
-                const sheetName = e.target.dataset.sheet;
-                renderSheet(sheetName);
-            }
-        });
-
-        // History tab delegated buttons
-        document.getElementById('sheet-content').addEventListener('click', (event) => {
-            const t = event.target;
-            if (t.id === 'history-export-csv-button') {
-                exportHistoryAsCsv();
-            } else if (t.id === 'history-copy-csv-button') {
-                copyHistoryAsCsv();
-            } else if (t.id === 'history-clear-button') {
-                clearHistory();
-            }
-        });
-
-        // Initial rendering on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            renderSheet('Umbrella');
-            initQuote();
-        });
-    </script>
+/* ========= Init ========= */
+(function init(){
+  applyTheme(store.theme);
+  setDailyQuote();
+  setActiveTab('Umbrella');      // default render + handlers
+  $('#viewRef').classList.toggle('hidden', !store.refBlob);
+  $('#analyzeBtn').addEventListener('click', analyze);
+})();
+</script>
 </body>
 </html>
