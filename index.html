@@ -1,45 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Trading Rules Calculator</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-  :root {
-    --radius: 14px;
-  }
+  :root { --radius: 14px; }
   body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
   /* Textured backgrounds */
-  body[data-theme='dark']{
-    background:#0b0f14;
-    color:#e5e7eb;
+  body[data-theme='dark'] {
+    background:#0b0f14; color:#e5e7eb;
     background-image:
-      radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
       linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
-    background-size:8px 8px,100% 100%;
+    background-size:8px 8px, 100% 100%;
   }
-  body[data-theme='light']{
-    background:#f5f7fb;
-    color:#111827;
+  body[data-theme='light'] {
+    background:#f5f7fb; color:#111827;
     background-image:
-      radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px),
+      radial-gradient(rgba(0,0,0,.045) 1px, transparent 1px),
       linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
-    background-size:10px 10px,100% 100%;
+    background-size:10px 10px, 100% 100%;
   }
 
-  /* Card surface */
-  .surface {
-    border-radius: var(--radius);
-    box-shadow: 0 10px 30px rgba(2,6,23,.18);
-  }
-  [data-theme='light'] .surface{
-    box-shadow: 0 10px 24px rgba(2,6,23,.08);
-  }
+  .surface { border-radius: var(--radius); box-shadow: 0 12px 30px rgba(2,6,23,.18); }
+  [data-theme='light'] .surface { box-shadow: 0 10px 24px rgba(2,6,23,.08); }
 
   /* Inputs readable in both themes */
   [data-theme='dark'] input[type=number], [data-theme='dark'] textarea {
@@ -51,22 +41,35 @@
   [data-theme='dark'] ::placeholder { color:#9ca3af; }
   [data-theme='light'] ::placeholder { color:#6b7280; }
 
-  /* Result tiles (subtle iOS card look) */
+  /* Result tiles */
   [data-theme='dark'] .result-tile { background:#141a22; border:1px solid #1f2937; color:#e5e7eb; box-shadow:0 2px 8px rgba(0,0,0,.25); }
   [data-theme='light'] .result-tile { background:#ffffff; border:1px solid #e5e7eb; color:#111827; box-shadow:0 2px 10px rgba(0,0,0,.08); }
   .result-tile { border-radius:12px; transition:transform .2s ease, box-shadow .2s ease; }
   .result-tile:hover { transform:translateY(-1px); }
 
-  /* Active tab – pill + glow + underline */
+  /* Louder active tab */
   .tab-btn { transition: all .25s ease; border-radius:9999px; position:relative; }
-  [data-theme='dark'] .tab-btn.active { background:#1e293b; color:#f1f5f9; box-shadow:0 0 0 1px rgba(148,163,184,.25), 0 8px 20px rgba(30,41,59,.35); }
-  [data-theme='light'] .tab-btn.active { background:#e5e7eb; color:#111827; box-shadow:0 0 0 1px rgba(17,24,39,.06), 0 8px 16px rgba(0,0,0,.08); }
+  [data-theme='dark'] .tab-btn.active {
+    background:#0f172a; color:#f8fafc;
+    box-shadow:
+      0 0 0 2px rgba(99,102,241,.45),
+      0 10px 24px rgba(30,41,59,.55),
+      inset 0 0 0 1px rgba(148,163,184,.28);
+  }
+  [data-theme='light'] .tab-btn.active {
+    background:#e7eaf3; color:#0f172a;
+    box-shadow:
+      0 0 0 2px rgba(99,102,241,.25),
+      0 10px 22px rgba(0,0,0,.10),
+      inset 0 0 0 1px rgba(17,24,39,.06);
+  }
   .tab-btn.active::after{
-    content:""; position:absolute; left:12px; right:12px; bottom:-6px; height:3px; border-radius:9999px;
+    content:""; position:absolute; left:10px; right:10px; bottom:-7px; height:4px; border-radius:9999px;
     background: linear-gradient(90deg, #38bdf8, #6366f1, #22c55e);
+    filter: drop-shadow(0 2px 6px rgba(99,102,241,.55));
   }
 
-  /* Sheet colors (unchanged logic names) */
+  /* Sheet tints (unchanged names) */
   [data-theme='dark'] .bg-umbrella{ background:#122647;}
   [data-theme='light'] .bg-umbrella{ background:#e8f1ff;}
   [data-theme='dark'] .bg-bike{ background:#0f2d29;}
@@ -78,18 +81,11 @@
   [data-theme='dark'] .bg-pandavas{ background:#3a2211;}
   [data-theme='light'] .bg-pandavas{ background:#ffefe1;}
 
-  /* Content transitions (iOS-y) */
-  .swap-enter{ opacity:0; transform:translateY(6px) scale(.995); }
-  .swap-enter-active{ opacity:1; transform:translateY(0) scale(1); transition: opacity .28s ease, transform .28s cubic-bezier(.2,.8,.2,1);}
-  .swap-exit{ opacity:1; transform:translateY(0) scale(1); }
-  .swap-exit-active{ opacity:0; transform:translateY(-6px) scale(.995); transition: opacity .2s ease, transform .2s ease;}
+  /* Content transition */
+  .fade-in { opacity:0; transform:translateY(6px) scale(.995); }
+  .fade-in.ready { opacity:1; transform:translateY(0) scale(1); transition: opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
 
-  /* Collapsible panels */
-  .collapse { overflow: hidden; transition: grid-template-rows .35s ease, opacity .25s ease; display:grid; grid-template-rows: 0fr; opacity:.0; }
-  .collapse.open{ grid-template-rows: 1fr; opacity:1; }
-  .collapse > div{ min-height:0; }
-
-  /* Floating message */
+  /* Toast */
   .toast{
     position:fixed; top:18px; right:18px; z-index:50; padding:.75rem 1rem; border-radius:12px; color:white;
     transform: translateY(-10px); opacity:0; transition: transform .25s ease, opacity .25s ease;
@@ -102,7 +98,7 @@
   <div id="toast" class="toast bg-emerald-600"></div>
 
   <div class="max-w-5xl mx-auto space-y-4">
-    <!-- Header / Controls -->
+    <!-- Header -->
     <div class="surface p-4 sm:p-5 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-2xl flex items-center justify-center bg-gradient-to-br from-sky-400 to-indigo-500 text-white">
@@ -113,7 +109,6 @@
           <p class="text-sm opacity-70">Type values — results update instantly.</p>
         </div>
       </div>
-
       <div class="flex items-center gap-2">
         <button id="helpBtn" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Help">
           <i class="fa-regular fa-circle-question text-lg"></i>
@@ -143,54 +138,24 @@
     <!-- Content -->
     <div id="contentHost" class="surface p-4 sm:p-6"></div>
 
-    <!-- Utilities row -->
+    <!-- Utilities -->
     <div class="surface p-4 sm:p-5">
       <div class="flex flex-wrap items-center justify-center gap-3">
         <button id="shareWhatsApp" class="px-4 py-2 rounded-full bg-green-500 text-white font-semibold hover:brightness-110"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</button>
         <button id="shareTelegram" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold hover:brightness-110"><i class="fab fa-telegram-plane mr-2"></i>Telegram</button>
         <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
-        <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
-      </div>
-
-      <!-- Collapsibles -->
-      <div class="mt-5 grid md:grid-cols-2 gap-4">
-        <!-- Reference panel -->
-        <div class="rounded-xl border border-gray-700/30 p-4">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold">Reference</h3>
-            <button id="toggleRef" class="text-sm opacity-80 hover:opacity-100">Expand</button>
-          </div>
-          <div id="refPanel" class="collapse mt-2">
-            <div>
-              <div class="flex items-center gap-2 mb-3">
-                <input id="refUrl" type="url" placeholder="Paste image URL (your 5 steps)" class="w-full rounded-lg border px-3 py-2 text-sm">
-                <button id="saveRef" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm">Save</button>
-              </div>
-              <div class="rounded-lg overflow-hidden">
-                <img id="refImg" alt="Reference" class="w-full h-64 object-contain bg-black/5 dark:bg-white/5">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Daily quote -->
-        <div class="rounded-xl border border-gray-700/30 p-4">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold">Daily Trader Quirk</h3>
-            <button id="toggleQuote" class="text-sm opacity-80 hover:opacity-100">Expand</button>
-          </div>
-          <div id="quotePanel" class="collapse mt-2">
-            <div>
-              <p id="dailyQuote" class="text-sm opacity-90"></p>
-            </div>
-          </div>
-        </div>
+        <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Upload Reference</button>
+        <button id="viewRef" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110 hidden"><i class="fa-regular fa-eye mr-2"></i>View Reference</button>
+        <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
       </div>
     </div>
 
+    <!-- Persistent quote line -->
+    <div id="dailyQuote" class="text-center text-sm opacity-85 italic">“...”</div>
+
     <!-- Footer tiny -->
     <div class="opacity-70 text-center text-xs">
-      <p>Sharing this page sends your current URL only. “Analyze” is optional and off by default.</p>
+      <p>“Analyze” is offline by default. Add an OpenAI key in Settings to use their API (optional).</p>
     </div>
   </div>
 
@@ -203,14 +168,14 @@
       </div>
       <ul class="space-y-2 text-sm opacity-90">
         <li>• Tabs = different rules. Enter numbers; results update instantly.</li>
-        <li>• Save Calculation adds a row to History. Export/Copy as CSV without broken columns.</li>
-        <li>• Notes are saved locally. Reference lets you store an image URL.</li>
-        <li>• “Analyze” runs offline summary. You can optionally add your OpenAI API key in Settings.</li>
+        <li>• Save Calculation adds to History. Export/Copy CSV is correctly quoted.</li>
+        <li>• Notes save locally. Reference lets you upload a local image for quick viewing.</li>
+        <li>• “Analyze” runs offline summary by default; API option is user-controlled.</li>
       </ul>
     </div>
   </dialog>
 
-  <!-- Settings / API Modal -->
+  <!-- Settings Modal -->
   <dialog id="settingsModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(540px,92vw)]">
     <div class="p-5 space-y-4">
       <div class="flex items-center justify-between">
@@ -227,7 +192,7 @@
       <div class="space-y-2">
         <label class="text-sm font-semibold">OpenAI API Key (optional)</label>
         <input id="apiKey" type="password" placeholder="sk-..." class="w-full rounded-lg border px-3 py-2 text-sm">
-        <p class="text-xs opacity-70">Only used when you press Analyze. You pay OpenAI directly; leave blank for free offline analysis.</p>
+        <p class="text-xs opacity-70">Only used if you press Analyze and want online AI. Leave blank for free offline summary.</p>
       </div>
       <div class="flex justify-end gap-2">
         <button data-close class="px-4 py-2 rounded-lg border">Close</button>
@@ -236,15 +201,35 @@
     </div>
   </dialog>
 
+  <!-- Reference Viewer -->
+  <dialog id="refModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(680px,95vw)]">
+    <div class="p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-extrabold">Reference Image</h2>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3">
+        <input id="refFile" type="file" accept="image/*" class="w-full rounded-lg border px-3 py-2 text-sm" />
+        <div class="rounded-xl overflow-hidden border">
+          <img id="refPreview" alt="Reference preview" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
+        </div>
+      </div>
+      <div class="flex justify-between">
+        <button id="clearRef" class="px-4 py-2 rounded-lg bg-rose-600 text-white">Clear</button>
+        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
+      </div>
+    </div>
+  </dialog>
+
 <script>
-/* ---------- State & Storage ---------- */
+/* ========= State & Storage ========= */
 const store = {
   get theme(){ return localStorage.getItem('trc_theme') || 'dark'; },
   set theme(v){ localStorage.setItem('trc_theme', v); },
   get notes(){ return localStorage.getItem('trc_notes') || ''; },
   set notes(v){ localStorage.setItem('trc_notes', v); },
-  get ref(){ return localStorage.getItem('trc_ref') || ''; },
-  set ref(v){ localStorage.setItem('trc_ref', v); },
+  get refBlob(){ return localStorage.getItem('trc_ref_blob') || ''; },
+  set refBlob(v){ localStorage.setItem('trc_ref_blob', v); },
   get apiKey(){ return localStorage.getItem('trc_api_key') || ''; },
   set apiKey(v){ localStorage.setItem('trc_api_key', v); },
   get history(){
@@ -253,58 +238,44 @@ const store = {
   set history(arr){ localStorage.setItem('trc_history', JSON.stringify(arr||[])); },
 };
 
-const state = {
-  active: 'Umbrella'
-};
+const state = { active: 'Umbrella' };
 
 function toast(msg, ok=true){
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast ' + (ok ? 'bg-emerald-600':'bg-rose-600');
-  requestAnimationFrame(()=>{ el.classList.add('show'); });
-  setTimeout(()=> el.classList.remove('show'), 2500);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=> el.classList.remove('show'), 2400);
 }
 
-/* ---------- Utilities ---------- */
-const $ = s => document.querySelector(s);
+const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmt = n => isFinite(n) ? Number(n).toFixed(2) : '-';
-const todayIndex = () => {
-  const now = new Date();
-  const start = new Date(now.getFullYear(),0,0);
-  return Math.floor((now - start)/86400000);
-};
 
-/* ---------- Quotes (offline, rotates daily) ---------- */
+/* ========= Daily Quote (persistent footer) ========= */
 const quotes = [
-  ['Plan the trade, trade the plan.','Every signal is weaker than your discipline.'],
-  ['Green day? Cool. Protect it.','Profit is rented, risk is owned.'],
-  ['Don’t marry a bias.','Price doesn’t care about your opinion.'],
-  ['Let runners run, cut losers quick.','Small loss now beats big loss later.'],
-  ['Flat is a position.','Patience pays more than predictions.'],
-  ['Your edge is execution.','Charts don’t repay revenge trades.'],
-  ['Clarity > activity.','Wait for the setup you named.']
+  'Plan the trade; trade the plan.',
+  'Profit is rented; risk is owned.',
+  'Don’t marry a bias.',
+  'Let runners run; cut losers quick.',
+  'Flat is a position.',
+  'Your edge is execution.',
+  'Clarity beats activity.'
 ];
 function setDailyQuote(){
-  const [a,b] = quotes[todayIndex() % quotes.length];
-  $('#dailyQuote').textContent = `“${a}”  —  ${b}`;
+  const now = new Date();
+  const start = new Date(now.getFullYear(),0,0);
+  const idx = Math.floor((now - start)/86400000) % quotes.length;
+  $('#dailyQuote').textContent = '“' + quotes[idx] + '”';
 }
 
-/* ---------- Sharing ---------- */
+/* ========= Sharing ========= */
 function currentUrl(){ return location.href; }
-$('#shareWhatsApp').addEventListener('click',()=>{
-  const url = encodeURIComponent(currentUrl());
-  window.open(`https://wa.me/?text=${url}`,'_blank');
-});
-$('#shareTelegram').addEventListener('click',()=>{
-  const url = encodeURIComponent(currentUrl());
-  window.open(`https://t.me/share/url?url=${url}`,'_blank');
-});
-$('#copyLink').addEventListener('click',()=>{
-  navigator.clipboard.writeText(currentUrl()).then(()=>toast('Link copied'));
-});
+$('#shareWhatsApp').addEventListener('click',()=> window.open(`https://wa.me/?text=${encodeURIComponent(currentUrl())}`,'_blank'));
+$('#shareTelegram').addEventListener('click',()=> window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl())}`,'_blank'));
+$('#copyLink').addEventListener('click',()=> navigator.clipboard.writeText(currentUrl()).then(()=>toast('Link copied')));
 
-/* ---------- The Rules (calculations unchanged) ---------- */
+/* ========= Rules (calculations unchanged logically) ========= */
 const rules = {
   Umbrella: {
     title:'Umbrella (Daily Candle)',
@@ -353,12 +324,12 @@ const rules = {
     calc(){
       const H = parseFloat($('#bike-high').value);
       const L = parseFloat($('#bike-low').value);
-      if(isFinite(H)&&isFinite(L)&&H>=0&&L>=0){
+      if(isFinite(H) && isFinite(L) && H>=0 && L>=0){
         const x = Math.sqrt(H);
-        const dx = x*0.2611;
+        const dx = x * 0.2611;
         const Hplus = H + dx;
         const y = Math.sqrt(L);
-        const dy = y*0.2611;
+        const dy = y * 0.2611;
         const Lminus = L - dy;
         $('#bike-sqrt-high-x').textContent = fmt(x);
         $('#bike-ding-ding-x').textContent = fmt(dx);
@@ -386,7 +357,7 @@ const rules = {
     calc(){
       const H = parseFloat($('#rikshaw-high').value);
       const L = parseFloat($('#rikshaw-low').value);
-      if(isFinite(H)&&isFinite(L)){
+      if(isFinite(H) && isFinite(L)){
         const h26 = H * (1 + 0.002611);
         const h13 = H * (1 + 0.001306);
         const l26 = L * (1 - 0.002611);
@@ -395,7 +366,7 @@ const rules = {
         $('#rikshaw-high-plus-13').textContent = fmt(h13);
         $('#rikshaw-low-minus-26').textContent = fmt(l26);
         $('#rikshaw-low-minus-13').textContent = fmt(l13);
-        return {inputs:{'1st 5 Min Candles High':H,'1st 5 Min Candles Low':L},results:{'High + 0.2611%':h26,'High + 0.1306%':h13,'Low - 0.2611%':l26,'Low - 0.1306%':l13}};
+        return {inputs:{'1st 5 Min Candles High':H,'1st 5 Min Candles Low':L}, results:{'High + 0.2611%':h26,'High + 0.1306%':h13,'Low - 0.2611%':l26,'Low - 0.1306%':l13}};
       } else {
         ['rikshaw-high-plus-26','rikshaw-high-plus-13','rikshaw-low-minus-26','rikshaw-low-minus-13'].forEach(id=>$('#'+id).textContent='-');
         return null;
@@ -414,16 +385,17 @@ const rules = {
     calc(){
       const H = parseFloat($('#car-high').value);
       const L = parseFloat($('#car-low').value);
-      if(isFinite(H)&&isFinite(L)){
+      if(isFinite(H) && isFinite(L)){
         const mid = (H+L)/2;
-        const up = mid*1.015;
-        const dn = mid*0.985;
+        const up  = mid * 1.015;
+        const dn  = mid * 0.985;
         $('#car-midpoint').textContent = fmt(mid);
-        $('#car-above').textContent = fmt(up);
-        $('#car-below').textContent = fmt(dn);
-        return {inputs:{'1130-1230 High':H,'1130-1230 Low':L},results:{Midpoint:mid,'1.5% Above Midpoint':up,'1.5% Below Midpoint':dn}};
+        $('#car-above').textContent    = fmt(up);
+        $('#car-below').textContent    = fmt(dn);
+        return {inputs:{'1130-1230 High':H,'1130-1230 Low':L}, results:{Midpoint:mid,'1.5% Above Midpoint':up,'1.5% Below Midpoint':dn}};
       } else {
-        ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-'); return null;
+        ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-');
+        return null;
       }
     }
   },
@@ -455,14 +427,14 @@ const rules = {
         return {inputs:{
           "Yesterday's 1st Half High":v1[0], "Yesterday's 1st Half Low":v1[1], "Yesterday's 1st Half Close":v1[2],
           "Yesterday's 2nd Half High":v2[0], "Yesterday's 2nd Half Low":v2[1], "Yesterday's 2nd Half Close":v2[2],
-        },results:{"Average 1 (Pivot)":a1, "Average 2 (Pivot)":a2}};
+        }, results:{"Average 1 (Pivot)":a1, "Average 2 (Pivot)":a2}};
       }
       return null;
     }
   }
 };
 
-/* ---------- Renderers ---------- */
+/* ========= Rendering ========= */
 function fieldInput(label,id){
   return `
     <div>
@@ -478,13 +450,12 @@ function fieldResult(label,id){
       <div id="${id}" class="text-xl font-bold mt-1">-</div>
     </div>`;
 }
-
 function renderCalcSheet(key){
   const r = rules[key];
-  const left = r.inputs.map(([lbl,id])=>fieldInput(lbl,id)).join('');
+  const left  = r.inputs.map(([lbl,id])=>fieldInput(lbl,id)).join('');
   const right = r.results.map(([lbl,id])=>fieldResult(lbl,id)).join('');
   return `
-    <div class="p-3 rounded-xl ${r.bg} bg-opacity-15">
+    <div class="p-3 rounded-xl ${r.bg} bg-opacity-15 fade-in">
       <h2 class="text-lg sm:text-xl font-extrabold mb-3">${r.title}</h2>
       <div class="grid md:grid-cols-2 gap-4">
         <div class="space-y-3">${left}</div>
@@ -497,7 +468,6 @@ function renderCalcSheet(key){
       </div>
     </div>`;
 }
-
 function renderHistory(){
   const rows = store.history;
   const empty = rows.length===0;
@@ -513,9 +483,8 @@ function renderHistory(){
         </td>
       </tr>`;
   }).join('');
-
   return `
-    <div>
+    <div class="fade-in">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <h2 class="text-lg sm:text-xl font-extrabold">History</h2>
         <div class="flex gap-2">
@@ -534,17 +503,16 @@ function renderHistory(){
               <th class="px-3 py-2 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody id="histBody" class="${empty?'':'divide-y'}">
+          <tbody id="histBody">
             ${empty?`<tr><td colspan="4" class="px-3 py-6 text-center opacity-70">No saved calculations yet.</td></tr>`:body}
           </tbody>
         </table>
       </div>
     </div>`;
 }
-
 function renderNotes(){
   return `
-    <div>
+    <div class="fade-in">
       <div class="flex items-center justify-between mb-2">
         <h2 class="text-lg sm:text-xl font-extrabold">Notes</h2>
         <span class="text-xs opacity-70">Autosaves locally</span>
@@ -553,53 +521,45 @@ function renderNotes(){
     </div>`;
 }
 
-/* ---------- Tab switching with animation ---------- */
-function swapContent(html){
+/* Swap content and run callback AFTER mount */
+function swapContent(html, afterMount){
   const host = $('#contentHost');
-  const prev = host.firstElementChild;
-  if(prev){
-    prev.classList.add('swap-exit-active');
-    setTimeout(()=>{ host.innerHTML=''; push(); }, 180);
-  } else push();
-
-  function push(){
-    const wrap = document.createElement('div');
-    wrap.className = 'swap-enter';
-    wrap.innerHTML = html;
-    host.appendChild(wrap);
-    requestAnimationFrame(()=>{
-      wrap.classList.remove('swap-enter'); wrap.classList.add('swap-enter-active');
-      setTimeout(()=>wrap.classList.remove('swap-enter-active'), 300);
-    });
-  }
+  host.innerHTML = html;
+  const block = host.firstElementChild;
+  requestAnimationFrame(()=> block.classList.add('ready'));
+  if(typeof afterMount === 'function'){ afterMount(); }
 }
 
 function setActiveTab(name){
   state.active = name;
   $$('#tabs .tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.sheet===name));
-  if(rules[name]) swapContent(renderCalcSheet(name));
-  else if(name==='History') swapContent(renderHistory());
-  else if(name==='Notes') swapContent(renderNotes());
-  bindSheetHandlers();
+  if(rules[name]){
+    swapContent(renderCalcSheet(name), bindSheetHandlers);
+  } else if(name==='History'){
+    swapContent(renderHistory(), bindSheetHandlers);
+  } else if(name==='Notes'){
+    swapContent(renderNotes(), bindSheetHandlers);
+  }
 }
 
-/* ---------- Bindings after render ---------- */
+/* ========= Bind per-sheet handlers (runs AFTER mount) ========= */
 function bindSheetHandlers(){
   const key = state.active;
   if(rules[key]){
-    // inputs
+    // Attach live calculations
     rules[key].inputs.forEach(([,id])=>{
       const el = $('#'+id);
-      if(el) el.addEventListener('input', ()=> rules[key].calc());
+      if(el){
+        ['input','change','paste','keyup'].forEach(evt => el.addEventListener(evt, ()=> rules[key].calc()));
+      }
     });
-    // save
-    const save = $('#saveBtn');
-    if(save) save.addEventListener('click', ()=>{
+    // Save button
+    $('#saveBtn')?.addEventListener('click', ()=>{
       const result = rules[key].calc();
       if(!result){ toast('Please fill inputs', false); return; }
       const row = {
         date: new Date().toISOString(),
-        rule: rules[key].title, // human-readable, no commas removed here, we quote CSV later
+        rule: rules[key].title, // human-readable
         inputs: result.inputs,
         results: result.results
       };
@@ -607,24 +567,15 @@ function bindSheetHandlers(){
       toast('Saved to History');
     });
   } else if(key==='History'){
-    $('#exportCsv')?.addEventListener('click', ()=>{
-      const csv = historyToCsv();
-      downloadText('trading_history.csv', csv);
-      toast('CSV exported');
-    });
-    $('#copyCsv')?.addEventListener('click', ()=>{
-      navigator.clipboard.writeText(historyToCsv()).then(()=>toast('CSV copied'));
-    });
-    $('#clearHist')?.addEventListener('click', ()=>{
-      if(confirm('Clear all history?')){ store.history=[]; setActiveTab('History'); toast('History cleared'); }
-    });
+    $('#exportCsv')?.addEventListener('click', ()=> { downloadText('trading_history.csv', historyToCsv()); toast('CSV exported'); });
+    $('#copyCsv')?.addEventListener('click', ()=> navigator.clipboard.writeText(historyToCsv()).then(()=>toast('CSV copied')));
+    $('#clearHist')?.addEventListener('click', ()=> { if(confirm('Clear all history?')){ store.history=[]; setActiveTab('History'); toast('History cleared'); } });
     $('#histBody')?.addEventListener('click', (e)=>{
       const btn = e.target.closest('[data-del]');
       if(btn){
         const idx = +btn.dataset.del;
         const hist = store.history; hist.splice(idx,1); store.history = hist;
-        setActiveTab('History');
-        toast('Deleted');
+        setActiveTab('History'); toast('Deleted');
       }
     });
   } else if(key==='Notes'){
@@ -632,17 +583,15 @@ function bindSheetHandlers(){
   }
 }
 
-/* ---------- CSV helpers (proper quoting) ---------- */
+/* ========= CSV helpers ========= */
 function csvQuote(v){
   if(v===null || v===undefined) return '';
   const s = String(v);
-  if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-  return s;
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
 }
 function historyToCsv(){
   const rows = store.history;
   if(!rows.length) return 'Date,Rule\n';
-  // Collect all input/result keys for stable columns
   const inputKeys = new Set(), resultKeys = new Set();
   rows.forEach(r=>{
     Object.keys(r.inputs||{}).forEach(k=>inputKeys.add(k));
@@ -668,58 +617,24 @@ function downloadText(filename, text){
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Collapsibles ---------- */
-function setupCollapsibles(){
-  const refBtn = $('#toggleRef'), ref = $('#refPanel');
-  refBtn.addEventListener('click', ()=>{
-    ref.classList.toggle('open');
-    refBtn.textContent = ref.classList.contains('open') ? 'Collapse' : 'Expand';
-  });
-  const qBtn = $('#toggleQuote'), q = $('#quotePanel');
-  qBtn.addEventListener('click', ()=>{
-    q.classList.toggle('open');
-    qBtn.textContent = q.classList.contains('open') ? 'Collapse' : 'Expand';
-  });
-}
-
-/* ---------- Reference image ---------- */
-function loadRef(){
-  const url = store.ref;
-  $('#refUrl').value = url;
-  $('#refImg').src = url || '';
-}
-$('#saveRef').addEventListener('click', ()=>{
-  const url = $('#refUrl').value.trim();
-  store.ref = url;
-  loadRef();
-  toast('Reference saved');
-});
-
-/* ---------- Analyze (offline by default; optional OpenAI) ---------- */
+/* ========= Analyze (offline; optional OpenAI) ========= */
 async function analyze(){
-  // Gather last calc or simple snapshot
   const last = store.history[0];
   const offline = () => {
     if(!last) return "No saved calculations yet. Save one and try again.";
     const results = last.results || {};
-    const keys = Object.keys(results);
-    if(!keys.length) return "Saved row has no numeric results.";
-    // Basic heuristics
-    const avg = keys.reduce((a,k)=> a + (isFinite(results[k])? +results[k]:0), 0) / keys.length;
-    const spreadish = (results['Range'] ?? results['Midpoint'] ?? avg);
+    const vals = Object.values(results).filter(v=> isFinite(v));
+    const mean = vals.length ? vals.reduce((a,b)=>a+Number(b),0)/vals.length : NaN;
     return [
       `Rule: ${last.rule}`,
-      `Data timestamp: ${new Date(last.date).toLocaleString()}`,
-      `Counted ${keys.length} numeric outputs. Mean≈ ${fmt(avg)}.`,
-      `Heads-up: stick to your entry plan; avoid chasing candles. Size positions so a -1R loss is tolerable.`,
-      `This is a heuristic summary, not financial advice.`
+      `Saved: ${new Date(last.date).toLocaleString()}`,
+      `Outputs: ${vals.length} • Mean ≈ ${fmt(mean)}`,
+      `Pointers: respect stops, avoid chasing; size so a -1R loss is tolerable; only trade named setups.`,
+      `Not financial advice.`
     ].join('\n');
   };
-
   const key = store.apiKey?.trim();
   if(!key){ alert(offline()); return; }
-
-  // Optional: call OpenAI only if user provided key
   try{
     const prompt = `Summarize these calculator outputs and give 3 practical, risk-aware pointers (max 120 words). Return plain text. Add "Not financial advice." at end.\n\n${JSON.stringify(last,null,2)}`;
     const res = await fetch('https://api.openai.com/v1/chat/completions',{
@@ -740,7 +655,7 @@ async function analyze(){
   }
 }
 
-/* ---------- Theme & Modals ---------- */
+/* ========= Theme & Modals ========= */
 function applyTheme(t){
   document.body.setAttribute('data-theme', t);
   $('#themeIcon').className = 'fa-solid ' + (t==='dark'?'fa-sun':'fa-moon');
@@ -752,32 +667,55 @@ $('#themeToggle').addEventListener('click', ()=>{
 $('#helpBtn').addEventListener('click', ()=> $('#helpModal').showModal());
 $('#settingsBtn').addEventListener('click', ()=> { $('#apiKey').value=store.apiKey; $('#settingsModal').showModal(); });
 $$('dialog [data-close]').forEach(b=> b.addEventListener('click', e=> e.target.closest('dialog').close()));
-$('#saveSettings').addEventListener('click', ()=>{
-  store.apiKey = $('#apiKey').value.trim();
-  toast('Settings saved');
-  $('#settingsModal').close();
-});
+$('#saveSettings').addEventListener('click', ()=>{ store.apiKey = $('#apiKey').value.trim(); toast('Settings saved'); $('#settingsModal').close(); });
 $('#setDark').addEventListener('click', ()=>{ applyTheme('dark'); store.theme='dark'; });
 $('#setLight').addEventListener('click', ()=>{ applyTheme('light'); store.theme='light'; });
 
-/* ---------- Tabs ---------- */
+/* ========= Tabs ========= */
 $('#tabs').addEventListener('click', (e)=>{
   const btn = e.target.closest('.tab-btn'); if(!btn) return;
   setActiveTab(btn.dataset.sheet);
 });
 
-/* ---------- Analyze Button ---------- */
-$('#analyzeBtn').addEventListener('click', analyze);
+/* ========= Reference upload/view ========= */
+$('#refBtn').addEventListener('click', ()=> {
+  $('#refPreview').src = store.refBlob || '';
+  $('#refModal').showModal();
+});
+$('#refFile').addEventListener('change', (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    store.refBlob = dataUrl;
+    $('#refPreview').src = dataUrl;
+    $('#viewRef').classList.toggle('hidden', !store.refBlob);
+    toast('Reference saved');
+  };
+  reader.readAsDataURL(file);
+});
+$('#viewRef').addEventListener('click', ()=>{
+  if(!store.refBlob){ toast('No reference yet', false); return; }
+  $('#refPreview').src = store.refBlob;
+  $('#refModal').showModal();
+});
+$('#clearRef').addEventListener('click', ()=>{
+  if(confirm('Remove reference image?')){
+    store.refBlob = '';
+    $('#refPreview').src = '';
+    $('#viewRef').classList.add('hidden');
+    toast('Reference cleared');
+  }
+});
 
-/* ---------- Share copy already wired above ---------- */
-
-/* ---------- Init ---------- */
+/* ========= Init ========= */
 (function init(){
   applyTheme(store.theme);
   setDailyQuote();
-  setupCollapsibles();
-  loadRef();
-  setActiveTab('Umbrella');  // default
+  setActiveTab('Umbrella');      // default render + handlers
+  $('#viewRef').classList.toggle('hidden', !store.refBlob);
+  $('#analyzeBtn').addEventListener('click', analyze);
 })();
 </script>
 </body>
