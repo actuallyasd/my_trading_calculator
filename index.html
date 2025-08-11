@@ -1,722 +1,645 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Trading Rules Calculator</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trading Rules Calculator</title>
+  <!-- Favicon (inline SVG candlestick) -->
+  <link rel="icon" href='data:image/svg+xml;utf8,
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="12" fill="%230d1117"/>
+      <rect x="18" y="18" width="10" height="28" rx="2" fill="%233b82f6"/>
+      <rect x="36" y="12" width="10" height="40" rx="2" fill="%23a3e635"/>
+      <rect x="23" y="10" width="2" height="12" fill="%233b82f6"/>
+      <rect x="41" y="52" width="2" height="10" fill="%23a3e635"/>
+    </svg>'/>
+  <!-- Tailwind & FA -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    :root { --radius: 16px }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    /* Textured background (light/dark) */
+    body[data-theme='dark']{
+      background:#0d1117;
+      color:#f9fafb;
+      background-image:
+        radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+      background-size:8px 8px, 100% 100%;
+    }
+    body[data-theme='light']{
+      background:#f3f4f6;
+      color:#111827;
+      background-image:
+        radial-gradient(rgba(17,24,39,.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(0,0,0,.02), transparent);
+      background-size:10px 10px, 100% 100%;
+    }
+    /* Container polish */
+    .app-card{
+      border-radius: var(--radius);
+      box-shadow: 0 24px 60px rgba(2,6,23,.35);
+    }
+    [data-theme='light'] .app-card{
+      box-shadow: 0 18px 40px rgba(16,24,40,.08);
+    }
+    /* Tab button states */
+    .tab-button{ transition: all .25s ease; }
+    [data-theme='dark'] .tab-button{ background:#1f2937; color:#cbd5e1; }
+    [data-theme='light'] .tab-button{ background:#e5e7eb; color:#374151; }
+    .tab-button.active{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 30px rgba(59,130,246,.35);
+    }
+    [data-theme='dark'] .tab-button.active{ background:#3b82f6; color:white; }
+    [data-theme='light'] .tab-button.active{ background:#111827; color:white; box-shadow:0 10px 30px rgba(17,24,39,.25); }
+    /* Input & result fields for visibility */
+    .input-field input{
+      background: white; color:#111827; border:1px solid #d1d5db;
+    }
+    [data-theme='dark'] .input-field input{
+      background:#111827; color:#f9fafb; border:1px solid #374151;
+    }
+    .result-field>div{
+      border-radius:12px; padding:.75rem 1rem;
+      border:1px solid;
+    }
+    [data-theme='dark'] .result-field>div{
+      background:#111827; color:#e5e7eb; border-color:#334155;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    }
+    [data-theme='light'] .result-field>div{
+      background:#f9fafb; color:#111827; border-color:#e5e7eb;
+      box-shadow: 0 8px 20px rgba(0,0,0,.05);
+    }
+    /* Sheet color tags (unchanged) */
+    [data-theme='dark'] .bg-umbrella{ background:#1e3a8a22 }
+    [data-theme='light'] .bg-umbrella{ background:#dbeafe }
+    [data-theme='dark'] .bg-bike{ background:#065f4622 }
+    [data-theme='light'] .bg-bike{ background:#dcfce7 }
+    [data-theme='dark'] .bg-rikshaw{ background:#5b21b622 }
+    [data-theme='light'] .bg-rikshaw{ background:#ede9fe }
+    [data-theme='dark'] .bg-car{ background:#991b1b22 }
+    [data-theme='light'] .bg-car{ background:#fee2e2 }
+    [data-theme='dark'] .bg-pandavas{ background:#9a341222 }
+    [data-theme='light'] .bg-pandavas{ background:#ffedd5 }
 
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-  :root { --radius: 14px; }
-  body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    /* Slide transition host */
+    .slide-host{ position:relative; overflow:hidden; min-height:420px }
+    .slide-panel{
+      position:absolute; inset:0;
+      opacity:0; transform: translateX(10%);
+      transition: transform .35s cubic-bezier(.22,.61,.36,1), opacity .35s ease;
+      will-change: transform, opacity;
+    }
+    .slide-panel.enter{ opacity:1; transform: translateX(0) }
+    .slide-from-right{ transform: translateX(12%) }
+    .slide-from-left{ transform: translateX(-12%) }
+    .slide-to-left{ transform: translateX(-12%); opacity:.001 }
+    .slide-to-right{ transform: translateX(12%); opacity:.001 }
 
-  /* Textured backgrounds */
-  body[data-theme='dark'] {
-    background:#0b0f14; color:#e5e7eb;
-    background-image:
-      radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
-    background-size:8px 8px, 100% 100%;
-  }
-  body[data-theme='light'] {
-    background:#f5f7fb; color:#111827;
-    background-image:
-      radial-gradient(rgba(0,0,0,.045) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
-    background-size:10px 10px, 100% 100%;
-  }
-
-  .surface { border-radius: var(--radius); box-shadow: 0 12px 30px rgba(2,6,23,.18); }
-  [data-theme='light'] .surface { box-shadow: 0 10px 24px rgba(2,6,23,.08); }
-
-  /* Inputs readable in both themes */
-  [data-theme='dark'] input[type=number], [data-theme='dark'] textarea {
-    color:#f9fafb !important; background:#1f2937 !important; border-color:#374151 !important;
-  }
-  [data-theme='light'] input[type=number], [data-theme='light'] textarea {
-    color:#111827 !important; background:#ffffff !important; border-color:#e5e7eb !important;
-  }
-  [data-theme='dark'] ::placeholder { color:#9ca3af; }
-  [data-theme='light'] ::placeholder { color:#6b7280; }
-
-  /* Result tiles */
-  [data-theme='dark'] .result-tile { background:#141a22; border:1px solid #1f2937; color:#e5e7eb; box-shadow:0 2px 8px rgba(0,0,0,.25); }
-  [data-theme='light'] .result-tile { background:#ffffff; border:1px solid #e5e7eb; color:#111827; box-shadow:0 2px 10px rgba(0,0,0,.08); }
-  .result-tile { border-radius:12px; transition:transform .2s ease, box-shadow .2s ease; }
-  .result-tile:hover { transform:translateY(-1px); }
-
-  /* Louder active tab */
-  .tab-btn { transition: all .25s ease; border-radius:9999px; position:relative; }
-  [data-theme='dark'] .tab-btn.active {
-    background:#0f172a; color:#f8fafc;
-    box-shadow:
-      0 0 0 2px rgba(99,102,241,.45),
-      0 10px 24px rgba(30,41,59,.55),
-      inset 0 0 0 1px rgba(148,163,184,.28);
-  }
-  [data-theme='light'] .tab-btn.active {
-    background:#e7eaf3; color:#0f172a;
-    box-shadow:
-      0 0 0 2px rgba(99,102,241,.25),
-      0 10px 22px rgba(0,0,0,.10),
-      inset 0 0 0 1px rgba(17,24,39,.06);
-  }
-  .tab-btn.active::after{
-    content:""; position:absolute; left:10px; right:10px; bottom:-7px; height:4px; border-radius:9999px;
-    background: linear-gradient(90deg, #38bdf8, #6366f1, #22c55e);
-    filter: drop-shadow(0 2px 6px rgba(99,102,241,.55));
-  }
-
-  /* Sheet tints (unchanged names) */
-  [data-theme='dark'] .bg-umbrella{ background:#122647;}
-  [data-theme='light'] .bg-umbrella{ background:#e8f1ff;}
-  [data-theme='dark'] .bg-bike{ background:#0f2d29;}
-  [data-theme='light'] .bg-bike{ background:#e5fbf1;}
-  [data-theme='dark'] .bg-rikshaw{ background:#261a45;}
-  [data-theme='light'] .bg-rikshaw{ background:#efe8ff;}
-  [data-theme='dark'] .bg-car{ background:#3a1111;}
-  [data-theme='light'] .bg-car{ background:#ffe8e8;}
-  [data-theme='dark'] .bg-pandavas{ background:#3a2211;}
-  [data-theme='light'] .bg-pandavas{ background:#ffefe1;}
-
-  /* Content transition */
-  .fade-in { opacity:0; transform:translateY(6px) scale(.995); }
-  .fade-in.ready { opacity:1; transform:translateY(0) scale(1); transition: opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
-
-  /* Toast */
-  .toast{
-    position:fixed; top:18px; right:18px; z-index:50; padding:.75rem 1rem; border-radius:12px; color:white;
-    transform: translateY(-10px); opacity:0; transition: transform .25s ease, opacity .25s ease;
-  }
-  .toast.show{ transform: translateY(0); opacity:1; }
-</style>
+    /* Message toast */
+    .message-box{
+      position: fixed; top: 1rem; right: 1rem; z-index: 50;
+      padding:.75rem 1rem; border-radius:.75rem; color:#fff;
+      transform: translateY(-10px); opacity:0;
+      transition: all .25s ease;
+    }
+    .message-box.show{ transform:translateY(0); opacity:1 }
+  </style>
 </head>
-
-<body data-theme="dark" class="min-h-screen p-4 sm:p-6 lg:p-8">
-  <div id="toast" class="toast bg-emerald-600"></div>
-
-  <div class="max-w-5xl mx-auto space-y-4">
-    <!-- Header -->
-    <div class="surface p-4 sm:p-5 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="h-9 w-9 rounded-2xl flex items-center justify-center bg-gradient-to-br from-sky-400 to-indigo-500 text-white">
-          <i class="fa-solid fa-calculator"></i>
+<body class="min-h-screen p-4 sm:p-8 transition-colors duration-300" data-theme="dark">
+  <div class="max-w-5xl mx-auto">
+    <div class="app-card bg-white/5 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-white/10" id="appCard">
+      <!-- Top bar -->
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white/90 dark:text-white text-center w-full">Trading Rules Calculator</h1>
+        <div class="flex-shrink-0 flex items-center gap-2">
+          <button id="help-button" class="p-2 rounded-full hover:bg-white/10 text-white/70">
+            <i class="fas fa-question text-lg"></i>
+          </button>
+          <button id="theme-toggle" class="p-2 rounded-full hover:bg-white/10 text-white/70">
+            <i class="fas fa-sun text-lg" id="toggle-icon"></i>
+          </button>
         </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-extrabold">Trading Rules Calculator</h1>
-          <p class="text-sm opacity-70">Type values — results update instantly.</p>
+      </div>
+
+      <p class="text-center text-white/70 dark:text-gray-400 mb-6 max-w-prose mx-auto text-sm sm:text-base">
+        Enter your values and the calculator will compute results based on the selected rule.
+      </p>
+
+      <!-- Tabs -->
+      <div id="tab-navigation" class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold active" data-sheet="Umbrella">Umbrella</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="Bike">Bike</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="Rikshaw">Rikshaw</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="Car">Car</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="Pandavas">Pandavas</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="History">History</button>
+        <button class="tab-button py-2 px-4 sm:px-5 rounded-full font-semibold" data-sheet="Notes">Notes</button>
+      </div>
+
+      <!-- Slide host -->
+      <div id="slide-host" class="slide-host">
+        <div id="sheet-content" class="slide-panel enter"></div>
+      </div>
+
+      <!-- Share row -->
+      <div class="mt-8 pt-6 border-t border-white/10">
+        <h3 class="text-center text-lg font-bold text-white/90 mb-4">Share this Calculator</h3>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button id="share-whatsapp" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </button>
+          <button id="share-telegram" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+            <i class="fab fa-telegram-plane"></i> Telegram
+          </button>
+          <button id="copy-link" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors duration-200 flex items-center gap-2">
+            <i class="fas fa-copy"></i> Copy Link
+          </button>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="helpBtn" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Help">
-          <i class="fa-regular fa-circle-question text-lg"></i>
-        </button>
-        <button id="settingsBtn" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Settings">
-          <i class="fa-solid fa-gear text-lg"></i>
-        </button>
-        <button id="themeToggle" class="h-10 w-10 rounded-full flex items-center justify-center hover:opacity-80" title="Toggle theme">
-          <i id="themeIcon" class="fa-solid fa-sun text-lg"></i>
-        </button>
+    </div>
+
+    <!-- Telegram footer card -->
+    <div class="mt-4">
+      <div class="bg-gray-900 text-white p-5 rounded-xl shadow-xl flex justify-center items-center">
+        <a href="https://t.me/Mathstrade" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-white font-semibold hover:text-indigo-400 transition-colors duration-200">
+          <i class="fab fa-telegram-plane text-2xl"></i>
+          <span class="text-lg">Connect on Telegram</span>
+        </a>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="surface p-2 sm:p-3">
-      <div id="tabs" class="flex flex-wrap justify-center gap-2">
-        <button class="tab-btn px-4 py-2 text-sm font-semibold active" data-sheet="Umbrella">Umbrella</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Bike">Bike</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Rikshaw">Rikshaw</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Car">Car</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Pandavas">Pandavas</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="History">History</button>
-        <button class="tab-btn px-4 py-2 text-sm font-semibold" data-sheet="Notes">Notes</button>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div id="contentHost" class="surface p-4 sm:p-6"></div>
-
-    <!-- Utilities -->
-    <div class="surface p-4 sm:p-5">
-      <div class="flex flex-wrap items-center justify-center gap-3">
-        <button id="shareWhatsApp" class="px-4 py-2 rounded-full bg-green-500 text-white font-semibold hover:brightness-110"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</button>
-        <button id="shareTelegram" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold hover:brightness-110"><i class="fab fa-telegram-plane mr-2"></i>Telegram</button>
-        <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
-        <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Upload Reference</button>
-        <button id="viewRef" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110 hidden"><i class="fa-regular fa-eye mr-2"></i>View Reference</button>
-        <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
-      </div>
-    </div>
-
-    <!-- Persistent quote line -->
-    <div id="dailyQuote" class="text-center text-sm opacity-85 italic">“...”</div>
-
-    <!-- Footer tiny -->
-    <div class="opacity-70 text-center text-xs">
-      <p>“Analyze” is offline by default. Add an OpenAI key in Settings to use their API (optional).</p>
-    </div>
+    <!-- Daily quote (single line, refreshes daily by API; falls back offline) -->
+    <div id="daily-quote" class="text-center text-white/80 mt-6 text-sm italic">“Loading today’s trader quote…”</div>
   </div>
 
   <!-- Help Modal -->
-  <dialog id="helpModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(520px,92vw)]">
-    <div class="p-5">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-extrabold">How it works</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <ul class="space-y-2 text-sm opacity-90">
-        <li>• Tabs = different rules. Enter numbers; results update instantly.</li>
-        <li>• Save Calculation adds to History. Export/Copy CSV is correctly quoted.</li>
-        <li>• Notes save locally. Reference lets you upload a local image for quick viewing.</li>
-        <li>• “Analyze” runs offline summary by default; API option is user-controlled.</li>
+  <div id="help-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="relative w-[92%] max-w-md rounded-2xl p-6 bg-[#111827] text-white shadow-2xl border border-white/10">
+      <button id="close-modal" class="absolute top-4 right-4 text-white/70 hover:text-white">
+        <i class="fas fa-times"></i>
+      </button>
+      <h2 class="text-xl font-bold mb-3">How It Works</h2>
+      <ul class="space-y-2 text-white/80 text-sm">
+        <li><strong>Tabs:</strong> Each tab is a different trading rule. History keeps your saved rows.</li>
+        <li><strong>Inputs:</strong> Type values; results update instantly.</li>
+        <li><strong>Save:</strong> Click <em>Save Calculation</em> to add it to History.</li>
+        <li><strong>CSV:</strong> Export or copy from the History tab.</li>
       </ul>
     </div>
-  </dialog>
+  </div>
 
-  <!-- Settings Modal -->
-  <dialog id="settingsModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(540px,92vw)]">
-    <div class="p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-extrabold">Settings</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2">
-        <label class="text-sm font-semibold">Theme</label>
-        <div class="flex gap-2">
-          <button id="setDark" class="px-3 py-1 rounded-lg border">Dark</button>
-          <button id="setLight" class="px-3 py-1 rounded-lg border">Light</button>
+  <!-- Toast -->
+  <div id="message-box" class="message-box bg-green-600">Saved.</div>
+
+  <script>
+    // --- State ---
+    const app = {
+      theme: 'dark',
+      activeSheet: 'Umbrella',
+      calculations: [],
+      notes: '',
+    };
+
+    // --- Utils ---
+    const $ = (q, d=document)=>d.querySelector(q);
+    const $$ = (q, d=document)=>Array.from(d.querySelectorAll(q));
+
+    const showMessage = (msg, type='success')=>{
+      const el = $('#message-box');
+      el.textContent = msg;
+      el.classList.remove('bg-green-600','bg-red-600');
+      el.classList.add(type==='success'?'bg-green-600':'bg-red-600','show');
+      setTimeout(()=>el.classList.remove('show'), 2500);
+    };
+
+    const copyToClipboard = (text)=>{
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showMessage('Link copied!'); }
+      catch{ showMessage('Copy failed', 'error'); }
+      finally{ document.body.removeChild(ta); }
+    };
+
+    const debounce=(fn,delay)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay)} };
+
+    // --- Local storage ---
+    const saveLS=()=>{
+      localStorage.setItem('calc_history', JSON.stringify(app.calculations));
+      localStorage.setItem('calc_notes', app.notes || '');
+    };
+    const loadLS=()=>{
+      try{
+        app.calculations = JSON.parse(localStorage.getItem('calc_history')||'[]');
+        app.notes = localStorage.getItem('calc_notes')||'';
+      }catch{ app.calculations=[]; app.notes=''; }
+    };
+
+    // --- Sheets (same formulas/IDs you had) ---
+    const renderInput = (label,id,val='')=>`
+      <div class="input-field">
+        <label class="block text-sm font-medium mb-1 text-white/70">${label}</label>
+        <input type="number" id="${id}" step="0.01"
+               class="w-full rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+               value="${val}" placeholder="Enter value"/>
+      </div>`;
+    const renderResult=(label,id,val='-')=>`
+      <div class="result-field">
+        <div>
+          <div class="text-[11px] uppercase tracking-wide text-white/60 mb-1">${label}</div>
+          <div id="${id}" class="text-xl font-bold">${val}</div>
         </div>
-      </div>
-      <div class="space-y-2">
-        <label class="text-sm font-semibold">OpenAI API Key (optional)</label>
-        <input id="apiKey" type="password" placeholder="sk-..." class="w-full rounded-lg border px-3 py-2 text-sm">
-        <p class="text-xs opacity-70">Only used if you press Analyze and want online AI. Leave blank for free offline summary.</p>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
-        <button id="saveSettings" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Save</button>
-      </div>
-    </div>
-  </dialog>
+      </div>`;
 
-  <!-- Reference Viewer -->
-  <dialog id="refModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(680px,95vw)]">
-    <div class="p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-extrabold">Reference Image</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3">
-        <input id="refFile" type="file" accept="image/*" class="w-full rounded-lg border px-3 py-2 text-sm" />
-        <div class="rounded-xl overflow-hidden border">
-          <img id="refPreview" alt="Reference preview" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
+    const sheets = {
+      Umbrella:{
+        title:'Umbrella (Daily Candle)',
+        cls:'umbrella',
+        fields:[
+          {t:'in', l:'Previous Day High', id:'umbrella-high'},
+          {t:'in', l:'Previous Day Low', id:'umbrella-low'},
+          {t:'out',l:'Range (High - Low)', id:'umbrella-range'},
+          {t:'out',l:'"X" (Range * 26.11%)', id:'umbrella-x'},
+          {t:'out',l:'High - "X"', id:'umbrella-high-minus-x'},
+          {t:'out',l:'Low + "X"', id:'umbrella-low-plus-x'},
+        ],
+        calc(){
+          const H=parseFloat($('#umbrella-high').value);
+          const L=parseFloat($('#umbrella-low').value);
+          if(isNaN(H)||isNaN(L)){ ['umbrella-range','umbrella-x','umbrella-high-minus-x','umbrella-low-plus-x'].forEach(id=>$('#'+id).textContent='-'); return null; }
+          const range=H-L, x=range*0.2611, hmx=H-x, lpx=L+x;
+          $('#umbrella-range').textContent=range.toFixed(2);
+          $('#umbrella-x').textContent=x.toFixed(2);
+          $('#umbrella-high-minus-x').textContent=hmx.toFixed(2);
+          $('#umbrella-low-plus-x').textContent=lpx.toFixed(2);
+          return {name:this.title,date:new Date().toISOString(),inputs:{H,L},results:{range,x,hmx,lpx}};
+        }
+      },
+      Bike:{
+        title:'Bike (1/2 Day Candle, 195 Minutes)',
+        cls:'bike',
+        fields:[
+          {t:'in', l:'High', id:'bike-high'},
+          {t:'in', l:'Low', id:'bike-low'},
+          {t:'out',l:'SQRT(High) "X"', id:'bike-sqrt-high-x'},
+          {t:'out',l:'Ding Ding (from "X")', id:'bike-ding-ding-x'},
+          {t:'out',l:'High + Ding Ding', id:'bike-high-plus-ding'},
+          {t:'out',l:'SQRT(Low) "Y"', id:'bike-sqrt-low-y'},
+          {t:'out',l:'Ding Ding (from "Y")', id:'bike-ding-ding-y'},
+          {t:'out',l:'Low - Ding Ding', id:'bike-low-minus-ding'},
+        ],
+        calc(){
+          const H=parseFloat($('#bike-high').value);
+          const L=parseFloat($('#bike-low').value);
+          if(isNaN(H)||isNaN(L)||H<0||L<0){ ['bike-sqrt-high-x','bike-ding-ding-x','bike-high-plus-ding','bike-sqrt-low-y','bike-ding-ding-y','bike-low-minus-ding'].forEach(id=>$('#'+id).textContent='-'); return null; }
+          const x=Math.sqrt(H), dx=x*0.2611, hp=H+dx, y=Math.sqrt(L), dy=y*0.2611, lm=L-dy;
+          $('#bike-sqrt-high-x').textContent=x.toFixed(2);
+          $('#bike-ding-ding-x').textContent=dx.toFixed(2);
+          $('#bike-high-plus-ding').textContent=hp.toFixed(2);
+          $('#bike-sqrt-low-y').textContent=y.toFixed(2);
+          $('#bike-ding-ding-y').textContent=dy.toFixed(2);
+          $('#bike-low-minus-ding').textContent=lm.toFixed(2);
+          return {name:this.title,date:new Date().toISOString(),inputs:{H,L},results:{x,dx,hp,y,dy,lm}};
+        }
+      },
+      Rikshaw:{
+        title:'Rikshaw (5 Minutes Candle)',
+        cls:'rikshaw',
+        fields:[
+          {t:'in', l:'1st 5 Min Candles High', id:'rikshaw-high'},
+          {t:'in', l:'1st 5 Min Candles Low', id:'rikshaw-low'},
+          {t:'out',l:'High + 0.2611%', id:'rikshaw-high-plus-26'},
+          {t:'out',l:'High + 0.1306%', id:'rikshaw-high-plus-13'},
+          {t:'out',l:'Low - 0.2611%', id:'rikshaw-low-minus-26'},
+          {t:'out',l:'Low - 0.1306%', id:'rikshaw-low-minus-13'},
+        ],
+        calc(){
+          const H=parseFloat($('#rikshaw-high').value);
+          const L=parseFloat($('#rikshaw-low').value);
+          if(isNaN(H)||isNaN(L)){ ['rikshaw-high-plus-26','rikshaw-high-plus-13','rikshaw-low-minus-26','rikshaw-low-minus-13'].forEach(id=>$('#'+id).textContent='-'); return null; }
+          const hp26=H*(1+0.002611), hp13=H*(1+0.001306), lm26=L*(1-0.002611), lm13=L*(1-0.001306);
+          $('#rikshaw-high-plus-26').textContent=hp26.toFixed(2);
+          $('#rikshaw-high-plus-13').textContent=hp13.toFixed(2);
+          $('#rikshaw-low-minus-26').textContent=lm26.toFixed(2);
+          $('#rikshaw-low-minus-13').textContent=lm13.toFixed(2);
+          return {name:this.title,date:new Date().toISOString(),inputs:{H,L},results:{hp26,hp13,lm26,lm13}};
+        }
+      },
+      Car:{
+        title:'Car (5 Minutes Candle, 1 Hour Time Frame)',
+        cls:'car',
+        fields:[
+          {t:'in', l:'1130-1230 High', id:'car-high'},
+          {t:'in', l:'1130-1230 Low', id:'car-low'},
+          {t:'out',l:'Midpoint (High + Low) / 2', id:'car-midpoint'},
+          {t:'out',l:'1.5% Above Midpoint', id:'car-above'},
+          {t:'out',l:'1.5% Below Midpoint', id:'car-below'},
+        ],
+        calc(){
+          const H=parseFloat($('#car-high').value);
+          const L=parseFloat($('#car-low').value);
+          if(isNaN(H)||isNaN(L)){ ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-'); return null; }
+          const mid=(H+L)/2, up=mid*1.015, dn=mid*0.985;
+          $('#car-midpoint').textContent=mid.toFixed(2);
+          $('#car-above').textContent=up.toFixed(2);
+          $('#car-below').textContent=dn.toFixed(2);
+          return {name:this.title,date:new Date().toISOString(),inputs:{H,L},results:{mid,up,dn}};
+        }
+      },
+      Pandavas:{
+        title:'Pandavas (1/2 Day Candle, 195 Minutes)',
+        cls:'pandavas',
+        fields:[
+          {t:'in', l:"Yesterday's 1st Half High", id:'pandavas-first-high'},
+          {t:'in', l:"Yesterday's 1st Half Low", id:'pandavas-first-low'},
+          {t:'in', l:"Yesterday's 1st Half Close", id:'pandavas-first-close'},
+          {t:'in', l:"Yesterday's 2nd Half High", id:'pandavas-second-high'},
+          {t:'in', l:"Yesterday's 2nd Half Low", id:'pandavas-second-low'},
+          {t:'in', l:"Yesterday's 2nd Half Close", id:'pandavas-second-close'},
+          {t:'out',l:'Average 1 (Pivot)', id:'pandavas-avg1'},
+          {t:'out',l:'Average 2 (Pivot)', id:'pandavas-avg2'},
+        ],
+        calc(){
+          const v1=[ 'first-high','first-low','first-close' ].map(s=>parseFloat($('#pandavas-'+s).value));
+          const v2=[ 'second-high','second-low','second-close' ].map(s=>parseFloat($('#pandavas-'+s).value));
+          const ok1=v1.every(v=>!isNaN(v)), ok2=v2.every(v=>!isNaN(v));
+          const avg1= ok1 ? (v1[0]+v1[1]+v1[2])/3 : NaN;
+          const avg2= ok2 ? (v2[0]+v2[1]+v2[2])/3 : NaN;
+          $('#pandavas-avg1').textContent = isNaN(avg1)?'-':avg1.toFixed(2);
+          $('#pandavas-avg2').textContent = isNaN(avg2)?'-':avg2.toFixed(2);
+          if(ok1 && ok2){
+            return {name:this.title,date:new Date().toISOString(),inputs:{v1:v1, v2:v2},results:{avg1,avg2}};
+          }
+          return null;
+        }
+      },
+      History:{ title:'Saved History', cls:'umbrella', fields:[] },
+      Notes:{ title:'Notes', cls:'umbrella', fields:[] },
+    };
+
+    const sheetHTML = (name)=>{
+      const s = sheets[name];
+      if(['History','Notes'].includes(name)){
+        if(name==='History'){
+          return `
+          <div class="tab-content bg-${s.cls} p-4 sm:p-6 rounded-xl h-full">
+            <div class="flex flex-wrap justify-center gap-3 mb-4">
+              <button id="export-csv" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+              </button>
+              <button id="copy-history" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full">
+                <i class="fas fa-copy mr-2"></i>Copy All
+              </button>
+            </div>
+            <div class="overflow-auto rounded-lg border border-white/10">
+              <table class="min-w-full text-sm">
+                <thead class="bg-white/5">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Date</th>
+                    <th class="px-3 py-2 text-left">Rule</th>
+                    <th class="px-3 py-2 text-left">Results</th>
+                    <th class="px-3 py-2 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+              </table>
+            </div>
+            <div id="empty-history" class="text-center text-white/60 italic py-4 hidden">No saved calculations yet.</div>
+          </div>`;
+        }
+        // Notes
+        return `
+        <div class="tab-content bg-${s.cls} p-4 sm:p-6 rounded-xl h-full">
+          <textarea id="notes-textarea" class="w-full h-72 rounded-lg border border-white/10 bg-black/30 text-white p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Write notes..."></textarea>
+        </div>`;
+      }
+      // Calculators
+      const inputs = s.fields.filter(f=>f.t==='in').map(f=>renderInput(f.l,f.id)).join('');
+      const outputs = s.fields.filter(f=>f.t==='out').map(f=>renderResult(f.l,f.id)).join('');
+      return `
+      <div class="tab-content bg-${s.cls} p-4 sm:p-6 rounded-xl h-full">
+        <h2 class="text-xl font-bold mb-4">${s.title}</h2>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="space-y-4">${inputs}</div>
+          <div class="grid gap-3">${outputs}</div>
         </div>
-      </div>
-      <div class="flex justify-between">
-        <button id="clearRef" class="px-4 py-2 rounded-lg bg-rose-600 text-white">Clear</button>
-        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
-      </div>
-    </div>
-  </dialog>
-
-<script>
-/* ========= State & Storage ========= */
-const store = {
-  get theme(){ return localStorage.getItem('trc_theme') || 'dark'; },
-  set theme(v){ localStorage.setItem('trc_theme', v); },
-  get notes(){ return localStorage.getItem('trc_notes') || ''; },
-  set notes(v){ localStorage.setItem('trc_notes', v); },
-  get refBlob(){ return localStorage.getItem('trc_ref_blob') || ''; },
-  set refBlob(v){ localStorage.setItem('trc_ref_blob', v); },
-  get apiKey(){ return localStorage.getItem('trc_api_key') || ''; },
-  set apiKey(v){ localStorage.setItem('trc_api_key', v); },
-  get history(){
-    try{ return JSON.parse(localStorage.getItem('trc_history')||'[]'); }catch{ return []; }
-  },
-  set history(arr){ localStorage.setItem('trc_history', JSON.stringify(arr||[])); },
-};
-
-const state = { active: 'Umbrella' };
-
-function toast(msg, ok=true){
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast ' + (ok ? 'bg-emerald-600':'bg-rose-600');
-  requestAnimationFrame(()=> el.classList.add('show'));
-  setTimeout(()=> el.classList.remove('show'), 2400);
-}
-
-const $  = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const fmt = n => isFinite(n) ? Number(n).toFixed(2) : '-';
-
-/* ========= Daily Quote (persistent footer) ========= */
-const quotes = [
-  'Plan the trade; trade the plan.',
-  'Profit is rented; risk is owned.',
-  'Don’t marry a bias.',
-  'Let runners run; cut losers quick.',
-  'Flat is a position.',
-  'Your edge is execution.',
-  'Clarity beats activity.'
-];
-function setDailyQuote(){
-  const now = new Date();
-  const start = new Date(now.getFullYear(),0,0);
-  const idx = Math.floor((now - start)/86400000) % quotes.length;
-  $('#dailyQuote').textContent = '“' + quotes[idx] + '”';
-}
-
-/* ========= Sharing ========= */
-function currentUrl(){ return location.href; }
-$('#shareWhatsApp').addEventListener('click',()=> window.open(`https://wa.me/?text=${encodeURIComponent(currentUrl())}`,'_blank'));
-$('#shareTelegram').addEventListener('click',()=> window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl())}`,'_blank'));
-$('#copyLink').addEventListener('click',()=> navigator.clipboard.writeText(currentUrl()).then(()=>toast('Link copied')));
-
-/* ========= Rules (calculations unchanged logically) ========= */
-const rules = {
-  Umbrella: {
-    title:'Umbrella (Daily Candle)',
-    bg:'bg-umbrella',
-    inputs:[
-      ['Previous Day High','umbrella-high'],
-      ['Previous Day Low','umbrella-low'],
-    ],
-    results:[
-      ['Range (High - Low)','umbrella-range'],
-      ['"X" (Range * 26.11%)','umbrella-x'],
-      ['High - "X"','umbrella-high-minus-x'],
-      ['Low + "X"','umbrella-low-plus-x'],
-    ],
-    calc(){
-      const H = parseFloat($('#umbrella-high').value);
-      const L = parseFloat($('#umbrella-low').value);
-      if(isFinite(H) && isFinite(L)){
-        const range = H - L;
-        const x = range * 0.2611;
-        const hmx = H - x;
-        const lpx = L + x;
-        $('#umbrella-range').textContent = fmt(range);
-        $('#umbrella-x').textContent = fmt(x);
-        $('#umbrella-high-minus-x').textContent = fmt(hmx);
-        $('#umbrella-low-plus-x').textContent = fmt(lpx);
-        return {inputs:{'Previous Day High':H,'Previous Day Low':L}, results:{Range:range,'"X"':x,'High - "X"':hmx,'Low + "X"':lpx}};
-      } else {
-        ['umbrella-range','umbrella-x','umbrella-high-minus-x','umbrella-low-plus-x'].forEach(id=>$('#'+id).textContent='-');
-        return null;
-      }
-    }
-  },
-  Bike: {
-    title:'Bike (1/2 Day Candle, 195 Minutes)',
-    bg:'bg-bike',
-    inputs:[['High','bike-high'],['Low','bike-low']],
-    results:[
-      ['SQRT(High) "X"','bike-sqrt-high-x'],
-      ['Ding Ding (from "X")','bike-ding-ding-x'],
-      ['High + Ding Ding','bike-high-plus-ding'],
-      ['SQRT(Low) "Y"','bike-sqrt-low-y'],
-      ['Ding Ding (from "Y")','bike-ding-ding-y'],
-      ['Low - Ding Ding','bike-low-minus-ding'],
-    ],
-    calc(){
-      const H = parseFloat($('#bike-high').value);
-      const L = parseFloat($('#bike-low').value);
-      if(isFinite(H) && isFinite(L) && H>=0 && L>=0){
-        const x = Math.sqrt(H);
-        const dx = x * 0.2611;
-        const Hplus = H + dx;
-        const y = Math.sqrt(L);
-        const dy = y * 0.2611;
-        const Lminus = L - dy;
-        $('#bike-sqrt-high-x').textContent = fmt(x);
-        $('#bike-ding-ding-x').textContent = fmt(dx);
-        $('#bike-high-plus-ding').textContent = fmt(Hplus);
-        $('#bike-sqrt-low-y').textContent = fmt(y);
-        $('#bike-ding-ding-y').textContent = fmt(dy);
-        $('#bike-low-minus-ding').textContent = fmt(Lminus);
-        return {inputs:{High:H,Low:L}, results:{'SQRT(High) "X"':x,'Ding Ding (from "X")':dx,'High + Ding Ding':Hplus,'SQRT(Low) "Y"':y,'Ding Ding (from "Y")':dy,'Low - Ding Ding':Lminus}};
-      } else {
-        ['bike-sqrt-high-x','bike-ding-ding-x','bike-high-plus-ding','bike-sqrt-low-y','bike-ding-ding-y','bike-low-minus-ding'].forEach(id=>$('#'+id).textContent='-');
-        return null;
-      }
-    }
-  },
-  Rikshaw:{
-    title:'Rikshaw (5 Minutes Candle)',
-    bg:'bg-rikshaw',
-    inputs:[['1st 5 Min Candles High','rikshaw-high'],['1st 5 Min Candles Low','rikshaw-low']],
-    results:[
-      ['High + 0.2611%','rikshaw-high-plus-26'],
-      ['High + 0.1306%','rikshaw-high-plus-13'],
-      ['Low - 0.2611%','rikshaw-low-minus-26'],
-      ['Low - 0.1306%','rikshaw-low-minus-13'],
-    ],
-    calc(){
-      const H = parseFloat($('#rikshaw-high').value);
-      const L = parseFloat($('#rikshaw-low').value);
-      if(isFinite(H) && isFinite(L)){
-        const h26 = H * (1 + 0.002611);
-        const h13 = H * (1 + 0.001306);
-        const l26 = L * (1 - 0.002611);
-        const l13 = L * (1 - 0.001306);
-        $('#rikshaw-high-plus-26').textContent = fmt(h26);
-        $('#rikshaw-high-plus-13').textContent = fmt(h13);
-        $('#rikshaw-low-minus-26').textContent = fmt(l26);
-        $('#rikshaw-low-minus-13').textContent = fmt(l13);
-        return {inputs:{'1st 5 Min Candles High':H,'1st 5 Min Candles Low':L}, results:{'High + 0.2611%':h26,'High + 0.1306%':h13,'Low - 0.2611%':l26,'Low - 0.1306%':l13}};
-      } else {
-        ['rikshaw-high-plus-26','rikshaw-high-plus-13','rikshaw-low-minus-26','rikshaw-low-minus-13'].forEach(id=>$('#'+id).textContent='-');
-        return null;
-      }
-    }
-  },
-  Car:{
-    title:'Car (5 Minutes Candle, 1 Hour Time Frame)',
-    bg:'bg-car',
-    inputs:[['1130-1230 High','car-high'],['1130-1230 Low','car-low']],
-    results:[
-      ['Midpoint (High + Low) / 2','car-midpoint'],
-      ['1.5% Above Midpoint','car-above'],
-      ['1.5% Below Midpoint','car-below'],
-    ],
-    calc(){
-      const H = parseFloat($('#car-high').value);
-      const L = parseFloat($('#car-low').value);
-      if(isFinite(H) && isFinite(L)){
-        const mid = (H+L)/2;
-        const up  = mid * 1.015;
-        const dn  = mid * 0.985;
-        $('#car-midpoint').textContent = fmt(mid);
-        $('#car-above').textContent    = fmt(up);
-        $('#car-below').textContent    = fmt(dn);
-        return {inputs:{'1130-1230 High':H,'1130-1230 Low':L}, results:{Midpoint:mid,'1.5% Above Midpoint':up,'1.5% Below Midpoint':dn}};
-      } else {
-        ['car-midpoint','car-above','car-below'].forEach(id=>$('#'+id).textContent='-');
-        return null;
-      }
-    }
-  },
-  Pandavas:{
-    title:'Pandavas (1/2 Day Candle, 195 Minutes)',
-    bg:'bg-pandavas',
-    inputs:[
-      ["Yesterday's 1st Half High",'pandavas-first-high'],
-      ["Yesterday's 1st Half Low",'pandavas-first-low'],
-      ["Yesterday's 1st Half Close",'pandavas-first-close'],
-      ["Yesterday's 2nd Half High",'pandavas-second-high'],
-      ["Yesterday's 2nd Half Low",'pandavas-second-low'],
-      ["Yesterday's 2nd Half Close",'pandavas-second-close'],
-    ],
-    results:[
-      ['Average 1 (Pivot)','pandavas-avg1'],
-      ['Average 2 (Pivot)','pandavas-avg2'],
-    ],
-    calc(){
-      const v1 = ['pandavas-first-high','pandavas-first-low','pandavas-first-close'].map(id=>parseFloat($('#'+id).value));
-      const v2 = ['pandavas-second-high','pandavas-second-low','pandavas-second-close'].map(id=>parseFloat($('#'+id).value));
-      const ok1 = v1.every(x=>isFinite(x));
-      const ok2 = v2.every(x=>isFinite(x));
-      const a1 = ok1 ? (v1[0]+v1[1]+v1[2])/3 : NaN;
-      const a2 = ok2 ? (v2[0]+v2[1]+v2[2])/3 : NaN;
-      $('#pandavas-avg1').textContent = ok1 ? fmt(a1) : '-';
-      $('#pandavas-avg2').textContent = ok2 ? fmt(a2) : '-';
-      if(ok1 || ok2){
-        return {inputs:{
-          "Yesterday's 1st Half High":v1[0], "Yesterday's 1st Half Low":v1[1], "Yesterday's 1st Half Close":v1[2],
-          "Yesterday's 2nd Half High":v2[0], "Yesterday's 2nd Half Low":v2[1], "Yesterday's 2nd Half Close":v2[2],
-        }, results:{"Average 1 (Pivot)":a1, "Average 2 (Pivot)":a2}};
-      }
-      return null;
-    }
-  }
-};
-
-/* ========= Rendering ========= */
-function fieldInput(label,id){
-  return `
-    <div>
-      <label class="block text-xs font-semibold opacity-75 mb-1">${label}</label>
-      <input id="${id}" type="number" step="0.01" placeholder="Enter value"
-        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
-    </div>`;
-}
-function fieldResult(label,id){
-  return `
-    <div class="result-tile p-3">
-      <div class="text-[11px] uppercase tracking-wide opacity-70">${label}</div>
-      <div id="${id}" class="text-xl font-bold mt-1">-</div>
-    </div>`;
-}
-function renderCalcSheet(key){
-  const r = rules[key];
-  const left  = r.inputs.map(([lbl,id])=>fieldInput(lbl,id)).join('');
-  const right = r.results.map(([lbl,id])=>fieldResult(lbl,id)).join('');
-  return `
-    <div class="p-3 rounded-xl ${r.bg} bg-opacity-15 fade-in">
-      <h2 class="text-lg sm:text-xl font-extrabold mb-3">${r.title}</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="space-y-3">${left}</div>
-        <div class="grid gap-3 self-start">${right}</div>
-      </div>
-      <div class="mt-4 flex justify-center">
-        <button id="saveBtn" class="px-5 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110">
-          <i class="fa-solid fa-floppy-disk mr-2"></i>Save Calculation
-        </button>
-      </div>
-    </div>`;
-}
-function renderHistory(){
-  const rows = store.history;
-  const empty = rows.length===0;
-  const body = empty ? '' : rows.map((row,i)=>{
-    const resultPairs = Object.entries(row.results).map(([k,v])=>`<span class="whitespace-nowrap"><b>${k}:</b> ${fmt(v)}</span>`).join('<br>');
-    return `
-      <tr class="border-t border-gray-700/20">
-        <td class="px-3 py-2 text-sm">${new Date(row.date).toLocaleString()}</td>
-        <td class="px-3 py-2 text-sm">${row.rule}</td>
-        <td class="px-3 py-2 text-sm">${resultPairs}</td>
-        <td class="px-3 py-2 text-center">
-          <button class="text-rose-600 hover:underline" data-del="${i}">Delete</button>
-        </td>
-      </tr>`;
-  }).join('');
-  return `
-    <div class="fade-in">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg sm:text-xl font-extrabold">History</h2>
-        <div class="flex gap-2">
-          <button id="exportCsv" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold">Export CSV</button>
-          <button id="copyCsv" class="px-4 py-2 rounded-full bg-gray-700 text-white font-semibold">Copy CSV</button>
-          <button id="clearHist" class="px-4 py-2 rounded-full bg-rose-600 text-white font-semibold">Clear</button>
+        <div class="flex justify-center mt-6">
+          <button id="save-calculation" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full">
+            <i class="fas fa-save mr-2"></i>Save Calculation
+          </button>
         </div>
-      </div>
-      <div class="rounded-xl border overflow-hidden">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-black/5 dark:bg-white/5">
-            <tr>
-              <th class="px-3 py-2">Date</th>
-              <th class="px-3 py-2">Rule</th>
-              <th class="px-3 py-2">Results</th>
-              <th class="px-3 py-2 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="histBody">
-            ${empty?`<tr><td colspan="4" class="px-3 py-6 text-center opacity-70">No saved calculations yet.</td></tr>`:body}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-}
-function renderNotes(){
-  return `
-    <div class="fade-in">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-lg sm:text-xl font-extrabold">Notes</h2>
-        <span class="text-xs opacity-70">Autosaves locally</span>
-      </div>
-      <textarea id="notesBox" class="w-full h-64 rounded-xl border px-3 py-2 text-sm" placeholder="Write your notes...">${store.notes}</textarea>
-    </div>`;
-}
+      </div>`;
+    };
 
-/* Swap content and run callback AFTER mount */
-function swapContent(html, afterMount){
-  const host = $('#contentHost');
-  host.innerHTML = html;
-  const block = host.firstElementChild;
-  requestAnimationFrame(()=> block.classList.add('ready'));
-  if(typeof afterMount === 'function'){ afterMount(); }
-}
+    // --- Slide transition renderer ---
+    const tabOrder = ['Umbrella','Bike','Rikshaw','Car','Pandavas','History','Notes'];
+    const renderWithSlide = (next)=>{
+      const host = $('#slide-host');
+      const current = $('#sheet-content');
+      const nextPanel = document.createElement('div');
+      nextPanel.className = 'slide-panel';
+      nextPanel.innerHTML = sheetHTML(next);
 
-function setActiveTab(name){
-  state.active = name;
-  $$('#tabs .tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.sheet===name));
-  if(rules[name]){
-    swapContent(renderCalcSheet(name), bindSheetHandlers);
-  } else if(name==='History'){
-    swapContent(renderHistory(), bindSheetHandlers);
-  } else if(name==='Notes'){
-    swapContent(renderNotes(), bindSheetHandlers);
-  }
-}
+      const fromIdx = tabOrder.indexOf(app.activeSheet);
+      const toIdx = tabOrder.indexOf(next);
+      const dirRight = toIdx > fromIdx;
 
-/* ========= Bind per-sheet handlers (runs AFTER mount) ========= */
-function bindSheetHandlers(){
-  const key = state.active;
-  if(rules[key]){
-    // Attach live calculations
-    rules[key].inputs.forEach(([,id])=>{
-      const el = $('#'+id);
-      if(el){
-        ['input','change','paste','keyup'].forEach(evt => el.addEventListener(evt, ()=> rules[key].calc()));
+      // position new panel
+      nextPanel.classList.add(dirRight ? 'slide-from-right' : 'slide-from-left');
+      host.appendChild(nextPanel);
+
+      // trigger reflow then animate
+      requestAnimationFrame(()=>{
+        nextPanel.classList.add('enter');
+        // animate out current
+        current.classList.add(dirRight ? 'slide-to-left' : 'slide-to-right');
+        // when done, swap ids
+        setTimeout(()=>{
+          current.remove();
+          nextPanel.id = 'sheet-content';
+          setupSheet(next); // attach listeners after in-DOM
+        }, 370);
+      });
+    };
+
+    // --- History & CSV ---
+    const renderHistoryTable = ()=>{
+      const body = $('#history-table-body');
+      const empty = $('#empty-history');
+      body.innerHTML='';
+      if(!app.calculations.length){ empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      app.calculations.forEach((c,idx)=>{
+        const tr = document.createElement('tr');
+        tr.className='border-b border-white/10 hover:bg-white/5';
+        const resultsHtml = Object.entries(c.results)
+          .map(([k,v])=>`<span class="whitespace-nowrap"><b>${k}</b>: ${(typeof v==='number')?v.toFixed(2):v}</span>`)
+          .join('<br>');
+        tr.innerHTML = `
+          <td class="px-3 py-2">${new Date(c.date).toLocaleString()}</td>
+          <td class="px-3 py-2">${c.name}</td>
+          <td class="px-3 py-2">${resultsHtml}</td>
+          <td class="px-3 py-2 text-center">
+            <button class="delete-history text-red-400 hover:text-red-200" data-i="${idx}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      body.addEventListener('click', e=>{
+        const btn = e.target.closest('.delete-history');
+        if(!btn) return;
+        const i = +btn.dataset.i;
+        if(confirm('Delete this row?')){
+          app.calculations.splice(i,1);
+          saveLS(); renderHistoryTable(); showMessage('Deleted.');
+        }
+      }, { once:true });
+    };
+
+    const exportCSV = ()=>{
+      if(!app.calculations.length){ showMessage('No data to export','error'); return; }
+      // Compose wide CSV safely
+      const colsInputs = Object.keys(app.calculations[0].inputs||{});
+      const colsResults = Object.keys(app.calculations[0].results||{});
+      const header = ['Timestamp','Rule',...colsInputs.map(c=>'in_'+c),...colsResults.map(c=>'out_'+c)];
+      const rows = app.calculations.map(c=>{
+        const ins = colsInputs.map(k=>c.inputs?.[k] ?? '');
+        const outs = colsResults.map(k=>{
+          const v = c.results?.[k];
+          return (typeof v==='number') ? v.toFixed(4) : (v ?? '');
+        });
+        return [new Date(c.date).toLocaleString(), c.name, ...ins, ...outs];
+      });
+      const csv = [header, ...rows].map(r=>r.map(cell=>{
+        const s = String(cell);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+      }).join(',')).join('\n');
+
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href=url; a.download='trading_rules_history.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      showMessage('CSV exported');
+    };
+
+    const copyAll = ()=>{
+      if(!app.calculations.length){ showMessage('No data to copy','error'); return; }
+      const lines = app.calculations.map(c=>{
+        const resPairs = Object.entries(c.results).map(([k,v])=>`${k}:${(typeof v==='number')?v.toFixed(4):v}`).join(' | ');
+        return `${new Date(c.date).toLocaleString()} — ${c.name} — ${resPairs}`;
+      }).join('\n');
+      copyToClipboard(lines);
+    };
+
+    // --- Sheet wiring ---
+    const setupSheet = (name)=>{
+      const s = sheets[name];
+      // Light up active tab
+      $$('#tab-navigation .tab-button').forEach(b=>{
+        b.classList.toggle('active', b.dataset.sheet===name);
+      });
+
+      if(name==='History'){
+        renderHistoryTable();
+        $('#export-csv').addEventListener('click', exportCSV);
+        $('#copy-history').addEventListener('click', copyAll);
+        return;
       }
-    });
-    // Save button
-    $('#saveBtn')?.addEventListener('click', ()=>{
-      const result = rules[key].calc();
-      if(!result){ toast('Please fill inputs', false); return; }
-      const row = {
-        date: new Date().toISOString(),
-        rule: rules[key].title, // human-readable
-        inputs: result.inputs,
-        results: result.results
-      };
-      const hist = store.history; hist.unshift(row); store.history = hist;
-      toast('Saved to History');
-    });
-  } else if(key==='History'){
-    $('#exportCsv')?.addEventListener('click', ()=> { downloadText('trading_history.csv', historyToCsv()); toast('CSV exported'); });
-    $('#copyCsv')?.addEventListener('click', ()=> navigator.clipboard.writeText(historyToCsv()).then(()=>toast('CSV copied')));
-    $('#clearHist')?.addEventListener('click', ()=> { if(confirm('Clear all history?')){ store.history=[]; setActiveTab('History'); toast('History cleared'); } });
-    $('#histBody')?.addEventListener('click', (e)=>{
-      const btn = e.target.closest('[data-del]');
-      if(btn){
-        const idx = +btn.dataset.del;
-        const hist = store.history; hist.splice(idx,1); store.history = hist;
-        setActiveTab('History'); toast('Deleted');
+      if(name==='Notes'){
+        const ta = $('#notes-textarea'); ta.value = app.notes || '';
+        ta.addEventListener('input', debounce(e=>{ app.notes=e.target.value; saveLS(); }, 300));
+        return;
       }
+      // calculators: hook inputs -> calc
+      const calcFn = s.calc.bind(s);
+      s.fields.filter(f=>f.t==='in').forEach(f=>{
+        const el = $('#'+f.id);
+        el?.addEventListener('input', debounce(calcFn, 150));
+      });
+      // save button
+      $('#save-calculation')?.addEventListener('click', ()=>{
+        const c = calcFn();
+        if(c){ c.id=Date.now(); app.calculations.unshift(c); saveLS(); showMessage('Saved to history'); }
+        else showMessage('Fill inputs first', 'error');
+      });
+    };
+
+    // --- Tabs with slide ---
+    const initTabs = ()=>{
+      const buttons = $$('#tab-navigation .tab-button');
+      buttons.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const next = btn.dataset.sheet;
+          if(next===app.activeSheet) return;
+          renderWithSlide(next);
+          app.activeSheet = next;
+        });
+      });
+    };
+
+    // --- Share buttons ---
+    const initShare = ()=>{
+      const shareUrl = window.location.href;
+      $('#copy-link').addEventListener('click', ()=>copyToClipboard(shareUrl));
+      $('#share-whatsapp').addEventListener('click', ()=>{
+        window.open(`https://wa.me/?text=${encodeURIComponent(shareUrl)}`,'_blank');
+      });
+      $('#share-telegram').addEventListener('click', ()=>{
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Check this Trading Rules Calculator')}`,'_blank');
+      });
+    };
+
+    // --- Theme & Help ---
+    const initTheme = ()=>{
+      const icon = $('#toggle-icon');
+      $('#theme-toggle').addEventListener('click', ()=>{
+        const dark = document.body.getAttribute('data-theme')==='dark';
+        document.body.setAttribute('data-theme', dark?'light':'dark');
+        icon.classList.toggle('fa-sun', !dark);
+        icon.classList.toggle('fa-moon', dark);
+      });
+    };
+    const initHelp = ()=>{
+      const modal = $('#help-modal');
+      $('#help-button').addEventListener('click', ()=>{ modal.classList.remove('hidden'); modal.classList.add('flex'); });
+      $('#close-modal').addEventListener('click', ()=>{ modal.classList.add('hidden'); modal.classList.remove('flex'); });
+      modal.addEventListener('click', (e)=>{ if(e.target===modal){ modal.classList.add('hidden'); modal.classList.remove('flex'); } });
+    };
+
+    // --- Quote (simple daily) ---
+    const initQuote = async ()=>{
+      const el = $('#daily-quote');
+      try{
+        const r = await fetch('https://api.quotable.io/random');
+        if(!r.ok) throw new Error('fail');
+        const d = await r.json();
+        el.textContent = `“${d.content}” — ${d.author}`;
+      }catch{
+        el.textContent = '“Plan the trade, trade the plan.” — Unknown';
+      }
+    };
+
+    // --- Boot ---
+    window.addEventListener('DOMContentLoaded', ()=>{
+      loadLS();
+      // first render
+      $('#sheet-content').innerHTML = sheetHTML(app.activeSheet);
+      setupSheet(app.activeSheet);
+      initTabs(); initShare(); initTheme(); initHelp(); initQuote();
+
+      // Make sure active tab is visually highlighted on load
+      $$('#tab-navigation .tab-button').forEach(b=>{
+        b.classList.toggle('active', b.dataset.sheet===app.activeSheet);
+      });
     });
-  } else if(key==='Notes'){
-    $('#notesBox')?.addEventListener('input', e=> { store.notes = e.target.value; });
-  }
-}
-
-/* ========= CSV helpers ========= */
-function csvQuote(v){
-  if(v===null || v===undefined) return '';
-  const s = String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-}
-function historyToCsv(){
-  const rows = store.history;
-  if(!rows.length) return 'Date,Rule\n';
-  const inputKeys = new Set(), resultKeys = new Set();
-  rows.forEach(r=>{
-    Object.keys(r.inputs||{}).forEach(k=>inputKeys.add(k));
-    Object.keys(r.results||{}).forEach(k=>resultKeys.add(k));
-  });
-  const ik = Array.from(inputKeys), rk = Array.from(resultKeys);
-  const header = ['Date','Rule',...ik,...rk].map(csvQuote).join(',')+'\n';
-  const body = rows.map(r=>{
-    const line = [
-      new Date(r.date).toLocaleString(),
-      r.rule,
-      ...ik.map(k=> r.inputs?.[k] ?? ''),
-      ...rk.map(k=> isFinite(r.results?.[k]) ? Number(r.results[k]).toFixed(2) : (r.results?.[k] ?? ''))
-    ].map(csvQuote).join(',');
-    return line;
-  }).join('\n');
-  return header+body;
-}
-function downloadText(filename, text){
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-/* ========= Analyze (offline; optional OpenAI) ========= */
-async function analyze(){
-  const last = store.history[0];
-  const offline = () => {
-    if(!last) return "No saved calculations yet. Save one and try again.";
-    const results = last.results || {};
-    const vals = Object.values(results).filter(v=> isFinite(v));
-    const mean = vals.length ? vals.reduce((a,b)=>a+Number(b),0)/vals.length : NaN;
-    return [
-      `Rule: ${last.rule}`,
-      `Saved: ${new Date(last.date).toLocaleString()}`,
-      `Outputs: ${vals.length} • Mean ≈ ${fmt(mean)}`,
-      `Pointers: respect stops, avoid chasing; size so a -1R loss is tolerable; only trade named setups.`,
-      `Not financial advice.`
-    ].join('\n');
-  };
-  const key = store.apiKey?.trim();
-  if(!key){ alert(offline()); return; }
-  try{
-    const prompt = `Summarize these calculator outputs and give 3 practical, risk-aware pointers (max 120 words). Return plain text. Add "Not financial advice." at end.\n\n${JSON.stringify(last,null,2)}`;
-    const res = await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{role:"user", content: prompt}],
-        temperature: 0.3
-      })
-    });
-    if(!res.ok) throw new Error('API error');
-    const data = await res.json();
-    const text = data.choices?.[0]?.message?.content?.trim() || 'No response.';
-    alert(text);
-  }catch(e){
-    alert(offline());
-  }
-}
-
-/* ========= Theme & Modals ========= */
-function applyTheme(t){
-  document.body.setAttribute('data-theme', t);
-  $('#themeIcon').className = 'fa-solid ' + (t==='dark'?'fa-sun':'fa-moon');
-}
-$('#themeToggle').addEventListener('click', ()=>{
-  const t = document.body.getAttribute('data-theme')==='dark'?'light':'dark';
-  applyTheme(t); store.theme=t;
-});
-$('#helpBtn').addEventListener('click', ()=> $('#helpModal').showModal());
-$('#settingsBtn').addEventListener('click', ()=> { $('#apiKey').value=store.apiKey; $('#settingsModal').showModal(); });
-$$('dialog [data-close]').forEach(b=> b.addEventListener('click', e=> e.target.closest('dialog').close()));
-$('#saveSettings').addEventListener('click', ()=>{ store.apiKey = $('#apiKey').value.trim(); toast('Settings saved'); $('#settingsModal').close(); });
-$('#setDark').addEventListener('click', ()=>{ applyTheme('dark'); store.theme='dark'; });
-$('#setLight').addEventListener('click', ()=>{ applyTheme('light'); store.theme='light'; });
-
-/* ========= Tabs ========= */
-$('#tabs').addEventListener('click', (e)=>{
-  const btn = e.target.closest('.tab-btn'); if(!btn) return;
-  setActiveTab(btn.dataset.sheet);
-});
-
-/* ========= Reference upload/view ========= */
-$('#refBtn').addEventListener('click', ()=> {
-  $('#refPreview').src = store.refBlob || '';
-  $('#refModal').showModal();
-});
-$('#refFile').addEventListener('change', (e)=>{
-  const file = e.target.files?.[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const dataUrl = reader.result;
-    store.refBlob = dataUrl;
-    $('#refPreview').src = dataUrl;
-    $('#viewRef').classList.toggle('hidden', !store.refBlob);
-    toast('Reference saved');
-  };
-  reader.readAsDataURL(file);
-});
-$('#viewRef').addEventListener('click', ()=>{
-  if(!store.refBlob){ toast('No reference yet', false); return; }
-  $('#refPreview').src = store.refBlob;
-  $('#refModal').showModal();
-});
-$('#clearRef').addEventListener('click', ()=>{
-  if(confirm('Remove reference image?')){
-    store.refBlob = '';
-    $('#refPreview').src = '';
-    $('#viewRef').classList.add('hidden');
-    toast('Reference cleared');
-  }
-});
-
-/* ========= Init ========= */
-(function init(){
-  applyTheme(store.theme);
-  setDailyQuote();
-  setActiveTab('Umbrella');      // default render + handlers
-  $('#viewRef').classList.toggle('hidden', !store.refBlob);
-  $('#analyzeBtn').addEventListener('click', analyze);
-})();
-</script>
+  </script>
 </body>
 </html>
