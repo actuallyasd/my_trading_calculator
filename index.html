@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Trading Rules Calculator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs/%3E%3Ccircle cx='32' cy='32' r='30' fill='%236366f1'/%3E%3Cpath d='M18 39h28M18 31h20M18 23h14' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
@@ -92,39 +93,15 @@
   }
   .toast.show{ transform: translateY(0); opacity:1; }
 
-  /* ---- ONLY CHANGE #1: Dark-mode styling for Simulate dialog ---- */
-  /* These styles apply ONLY when body is dark and ONLY inside #simulateDialog */
-  [data-theme='dark'] #simulateDialog {
-    background:#0f172a !important;
-    color:#e5e7eb !important;
-    border: 1px solid #1f2937;
-  }
-  [data-theme='dark'] #simulateDialog .header,
-  [data-theme='dark'] #simulateDialog h2,
-  [data-theme='dark'] #simulateDialog h3,
-  [data-theme='dark'] #simulateDialog label,
-  [data-theme='dark'] #simulateDialog p,
-  [data-theme='dark'] #simulateDialog th,
-  [data-theme='dark'] #simulateDialog td,
-  [data-theme='dark'] #simulateDialog .text {
-    color:#e5e7eb !important;
-  }
-  [data-theme='dark'] #simulateDialog input,
-  [data-theme='dark'] #simulateDialog select,
-  [data-theme='dark'] #simulateDialog textarea {
-    background:#1f2937 !important;
-    color:#f9fafb !important;
-    border-color:#374151 !important;
-  }
-  [data-theme='dark'] #simulateDialog .row,
-  [data-theme='dark'] #simulateDialog .panel,
-  [data-theme='dark'] #simulateDialog table,
-  [data-theme='dark'] #simulateDialog .box {
-    background:#0b1220 !important;
-    border-color:#1f2937 !important;
-  }
-  [data-theme='dark'] #simulateDialog .muted { color:#9ca3af !important; }
-  [data-theme='dark'] #simulateDialog .accent { color:#93c5fd !important; }
+  /* Quick Links minimal styles (adheres to existing look) */
+  .ql-circle{ width:52px; height:52px; border-radius:9999px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,.12);}
+  [data-theme='dark'] .ql-circle{ border-color:rgba(255,255,255,.12); background:#0f172a;}
+  .ql-img{ width:100%; height:100%; object-fit:cover; }
+  .ql-add{ display:flex; align-items:center; justify-content:center; }
+  .ql-kebab{ position:absolute; right:-8px; top:-8px; width:26px; height:26px; border-radius:9999px; display:none; align-items:center; justify-content:center; }
+  [data-theme='dark'] .ql-kebab{ background:#111827; color:#e5e7eb; border:1px solid rgba(255,255,255,.08); }
+  [data-theme='light'] .ql-kebab{ background:#ffffff; color:#111827; border:1px solid rgba(0,0,0,.08); }
+  .ql-item:hover .ql-kebab{ display:flex; }
 </style>
 </head>
 
@@ -178,9 +155,16 @@
         <button id="shareWhatsApp" class="px-4 py-2 rounded-full bg-green-500 text-white font-semibold hover:brightness-110"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</button>
         <button id="shareTelegram" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold hover:brightness-110"><i class="fab fa-telegram-plane mr-2"></i>Telegram</button>
         <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
-        <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Upload Reference</button>
-        <button id="viewRef" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110 hidden"><i class="fa-regular fa-eye mr-2"></i>View Reference</button>
+        <!-- Single Reference button (view or upload in one) -->
+        <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Reference Image</button>
         <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
+      </div>
+
+      <!-- Quick Links (below buttons, adheres to design) -->
+      <div class="mt-5">
+        <div class="flex items-center justify-center gap-4 flex-wrap" id="qlWrap">
+          <!-- tiles render here -->
+        </div>
       </div>
     </div>
 
@@ -245,8 +229,7 @@
       <div class="space-y-3">
         <input id="refFile" type="file" accept="image/*" class="w-full rounded-lg border px-3 py-2 text-sm" />
         <div class="rounded-xl overflow-hidden border">
-          <!-- ONLY CHANGE #2: alt text no longer says 'preview' -->
-          <img id="refPreview" alt="Reference image" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
+          <img id="refPreview" alt="Reference preview" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
         </div>
       </div>
       <div class="flex justify-between">
@@ -256,17 +239,25 @@
     </div>
   </dialog>
 
-  <!-- Simulate Dialog (structure assumed from your working version; styles adjusted via CSS above) -->
-  <dialog id="simulateDialog" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(720px,95vw)]">
-    <div class="p-5 space-y-4">
-      <div class="flex items-center justify-between header">
-        <h2 class="text-xl font-extrabold">Simulate</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+  <!-- Quick Links Modal -->
+  <dialog id="qlModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(520px,92vw)]">
+    <div class="p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-extrabold">Quick Link</h2>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <!-- Your existing simulator body lives here; unchanged. -->
-      <div class="text-sm muted">Use your existing simulator controls and table here (not altered).</div>
+      <div class="space-y-2">
+        <label class="text-sm font-semibold">Title</label>
+        <input id="qlTitle" type="text" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="e.g., TradingView" />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-semibold">URL</label>
+        <input id="qlUrl" type="url" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="https://example.com" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button data-close class="px-4 py-2 rounded-lg border">Cancel</button>
+        <button id="qlSave" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Save</button>
+      </div>
     </div>
   </dialog>
 
@@ -285,9 +276,13 @@ const store = {
     try{ return JSON.parse(localStorage.getItem('trc_history')||'[]'); }catch{ return []; }
   },
   set history(arr){ localStorage.setItem('trc_history', JSON.stringify(arr||[])); },
+  get quickLinks(){
+    try{ return JSON.parse(localStorage.getItem('trc_quick_links')||'[]'); }catch{ return []; }
+  },
+  set quickLinks(arr){ localStorage.setItem('trc_quick_links', JSON.stringify(arr||[])); },
 };
 
-const state = { active: 'Umbrella' };
+const state = { active: 'Umbrella', qlEditIndex: -1 };
 
 function toast(msg, ok=true){
   const el = document.getElementById('toast');
@@ -591,24 +586,22 @@ function setActiveTab(name){
   }
 }
 
-/* ========= Bind per-sheet handlers (runs AFTER mount) ========= */
+/* ========= Bind per-sheet handlers ========= */
 function bindSheetHandlers(){
   const key = state.active;
   if(rules[key]){
-    // Attach live calculations
     rules[key].inputs.forEach(([,id])=>{
       const el = $('#'+id);
       if(el){
         ['input','change','paste','keyup'].forEach(evt => el.addEventListener(evt, ()=> rules[key].calc()));
       }
     });
-    // Save button
     $('#saveBtn')?.addEventListener('click', ()=>{
       const result = rules[key].calc();
       if(!result){ toast('Please fill inputs', false); return; }
       const row = {
         date: new Date().toISOString(),
-        rule: rules[key].title, // human-readable
+        rule: rules[key].title,
         inputs: result.inputs,
         results: result.results
       };
@@ -726,8 +719,9 @@ $('#tabs').addEventListener('click', (e)=>{
   setActiveTab(btn.dataset.sheet);
 });
 
-/* ========= Reference upload/view ========= */
+/* ========= Reference (single button) ========= */
 $('#refBtn').addEventListener('click', ()=> {
+  // Always open modal; if an image exists it shows immediately
   $('#refPreview').src = store.refBlob || '';
   $('#refModal').showModal();
 });
@@ -739,23 +733,90 @@ $('#refFile').addEventListener('change', (e)=>{
     const dataUrl = reader.result;
     store.refBlob = dataUrl;
     $('#refPreview').src = dataUrl;
-    $('#viewRef').classList.toggle('hidden', !store.refBlob);
     toast('Reference saved');
   };
   reader.readAsDataURL(file);
-});
-$('#viewRef').addEventListener('click', ()=>{
-  if(!store.refBlob){ toast('No reference yet', false); return; }
-  $('#refPreview').src = store.refBlob;
-  $('#refModal').showModal();
 });
 $('#clearRef').addEventListener('click', ()=>{
   if(confirm('Remove reference image?')){
     store.refBlob = '';
     $('#refPreview').src = '';
-    $('#viewRef').classList.add('hidden');
     toast('Reference cleared');
   }
+});
+
+/* ========= Quick Links ========= */
+function faviconFromUrl(urlStr){
+  try{
+    const u = new URL(urlStr);
+    const domain = u.hostname;
+    // Free, reliable favicon endpoint
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  }catch{ return ''; }
+}
+function renderQuickLinks(){
+  const wrap = $('#qlWrap');
+  const links = store.quickLinks.slice(0,4);
+  wrap.innerHTML = '';
+
+  // existing links
+  links.forEach((link, idx)=>{
+    const item = document.createElement('div');
+    item.className = 'relative ql-item group';
+    item.innerHTML = `
+      <a href="${link.url}" target="_blank" rel="noopener" title="${link.title}" class="ql-circle block overflow-hidden">
+        <img class="ql-img" alt="${link.title}" src="${faviconFromUrl(link.url)}">
+      </a>
+      <button class="ql-kebab" aria-label="More" title="More">
+        <i class="fa-solid fa-ellipsis"></i>
+      </button>
+    `;
+    // kebab actions
+    const kebab = item.querySelector('.ql-kebab');
+    kebab.addEventListener('click', (e)=>{
+      e.preventDefault();
+      // simple small menu via prompt/confirm to keep UI minimal and consistent
+      const action = prompt('Type "edit" to change or "remove" to delete this link:', 'edit');
+      if(!action) return;
+      if(action.toLowerCase().startsWith('r')){ // remove
+        const arr = store.quickLinks; arr.splice(idx,1); store.quickLinks = arr; renderQuickLinks(); toast('Link removed');
+      }else if(action.toLowerCase().startsWith('e')){ // edit
+        state.qlEditIndex = idx;
+        $('#qlTitle').value = link.title || '';
+        $('#qlUrl').value = link.url || '';
+        $('#qlModal').showModal();
+      }
+    });
+    wrap.appendChild(item);
+  });
+
+  // add button (if less than 4)
+  if(links.length < 4){
+    const add = document.createElement('button');
+    add.className = 'ql-circle ql-add';
+    add.title = 'Add link';
+    add.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    add.addEventListener('click', ()=>{
+      state.qlEditIndex = -1;
+      $('#qlTitle').value = '';
+      $('#qlUrl').value = '';
+      $('#qlModal').showModal();
+    });
+    wrap.appendChild(add);
+  }
+}
+$('#qlSave').addEventListener('click', ()=>{
+  const title = $('#qlTitle').value.trim();
+  const url = $('#qlUrl').value.trim();
+  if(!title || !url){ toast('Enter title and URL', false); return; }
+  try{ new URL(url); }catch{ toast('Invalid URL', false); return; }
+  const arr = store.quickLinks;
+  if(state.qlEditIndex >= 0){ arr[state.qlEditIndex] = {title, url}; }
+  else { if(arr.length >= 4){ toast('Max 4 links', false); return; } arr.push({title, url}); }
+  store.quickLinks = arr;
+  renderQuickLinks();
+  $('#qlModal').close();
+  toast('Link saved');
 });
 
 /* ========= Init ========= */
@@ -763,13 +824,8 @@ $('#clearRef').addEventListener('click', ()=>{
   applyTheme(store.theme);
   setDailyQuote();
   setActiveTab('Umbrella');      // default render + handlers
-  $('#viewRef').classList.toggle('hidden', !store.refBlob);
   $('#analyzeBtn').addEventListener('click', analyze);
-
-  // Simulate dialog: wire up close buttons if you open it elsewhere
-  document.querySelectorAll('#simulateDialog [data-close]')?.forEach(b=>{
-    b.addEventListener('click', ()=> $('#simulateDialog').close());
-  });
+  renderQuickLinks();
 })();
 </script>
 </body>
