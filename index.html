@@ -103,18 +103,9 @@
   [data-theme='light'] .ql-kebab{ background:#ffffff; color:#111827; border:1px solid rgba(0,0,0,.08); }
   .ql-item:hover .ql-kebab{ display:flex; }
 
-  /* === Simulator dialog theming (scoped) === */
-  #simulateModal { border:none; }
-  [data-theme='light'] #simulateModal .sheet { background:#ffffff; color:#111827; border:1px solid #e5e7eb; }
-  [data-theme='dark']  #simulateModal .sheet { background:#0f172a; color:#e5e7eb; border:1px solid #1f2937; }
-  [data-theme='light'] #simulateModal .card { background:#f8fafc; border:1px solid #e5e7eb; }
-  [data-theme='dark']  #simulateModal .card { background:#0b1220; border:1px solid #1f2937; }
-  [data-theme='light'] #simulateModal input,[data-theme='light'] #simulateModal select{background:#fff;color:#111827;border-color:#e5e7eb;}
-  [data-theme='dark']  #simulateModal input,[data-theme='dark']  #simulateModal select{background:#1f2937;color:#f9fafb;border-color:#374151;}
-  [data-theme='light'] #simulateModal table thead { background:#f3f4f6; }
-  [data-theme='dark']  #simulateModal table thead { background:#111827; }
-  [data-theme='light'] #simulateModal td,[data-theme='light'] #simulateModal th{border-color:#e5e7eb;}
-  [data-theme='dark']  #simulateModal td,[data-theme='dark']  #simulateModal th{border-color:#1f2937;}
+  /* Simulator dialog theming (ONLY affects the simulator dialog) */
+  [data-theme='dark'] #simulateModal { background:#0f172a; color:#e5e7eb; border:1px solid #1f2937; }
+  [data-theme='light'] #simulateModal { background:#ffffff; color:#111827; border:1px solid #e5e7eb; }
 </style>
 </head>
 
@@ -170,11 +161,9 @@
         <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
         <!-- Single Reference button (view or upload in one) -->
         <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Reference Image</button>
+        <!-- NEW: Simulate (added) -->
+        <button id="simulateBtn" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-gauge-high mr-2"></i>Simulate</button>
         <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
-        <!-- NEW: Simulate button -->
-        <button id="simulateBtn" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110">
-          <i class="fa-solid fa-chart-line mr-2"></i>Simulate
-        </button>
       </div>
 
       <!-- Quick Links (below buttons, adheres to design) -->
@@ -278,61 +267,21 @@
     </div>
   </dialog>
 
-  <!-- Simulator Modal -->
-  <dialog id="simulateModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(760px,95vw)]">
-    <div class="sheet p-5 space-y-4 rounded-2xl">
+  <!-- NEW: Simulator Modal -->
+  <dialog id="simulateModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(640px,95vw)]">
+    <div class="p-5 space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-extrabold">Simulate</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center" title="Close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="card rounded-xl p-4">
-          <div class="grid gap-3">
-            <div>
-              <label class="text-sm font-semibold">Starting Price</label>
-              <input id="simStart" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="e.g., 100">
-            </div>
-            <div>
-              <label class="text-sm font-semibold">Expected Daily Range %</label>
-              <input id="simRange" type="number" step="0.1" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="e.g., 1.0">
-            </div>
-            <div>
-              <label class="text-sm font-semibold">Minutes to Simulate</label>
-              <input id="simMinutes" type="number" step="1" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="e.g., 60">
-            </div>
-            <div>
-              <label class="text-sm font-semibold">Random Seed (optional)</label>
-              <input id="simSeed" type="number" step="1" class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="e.g., 42">
-            </div>
-            <div class="flex gap-2">
-              <button id="runSim" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Run</button>
-              <button id="clearSim" class="px-4 py-2 rounded-lg border">Clear</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card rounded-xl p-4 overflow-auto">
-          <div class="text-sm opacity-80 mb-2">Synthetic minute-by-minute path (no live data).</div>
-          <table class="w-full text-sm border-collapse">
-            <thead>
-              <tr>
-                <th class="text-left px-2 py-1 border">Minute</th>
-                <th class="text-left px-2 py-1 border">Price</th>
-                <th class="text-left px-2 py-1 border">Δ</th>
-              </tr>
-            </thead>
-            <tbody id="simBody">
-              <tr><td class="px-2 py-2 opacity-60" colspan="3">No simulation yet.</td></tr>
-            </tbody>
-          </table>
-          <div id="simSummary" class="text-sm mt-3 opacity-90"></div>
-        </div>
+      <div id="simBody" class="space-y-4">
+        <!-- inputs/results are injected dynamically based on active tab -->
       </div>
 
-      <div class="text-xs opacity-70">This is a toy simulation using a normal random walk scaled to your daily range. It does not reflect real market microstructure. Not financial advice.</div>
+      <div class="flex justify-end gap-2">
+        <button id="simRun" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Run Simulation</button>
+      </div>
     </div>
   </dialog>
 
@@ -888,80 +837,210 @@ $('#qlSave').addEventListener('click', ()=>{
   toast('Link saved');
 });
 
-/* ========= Simulator ========= */
-function seededRandom(seed){
-  // Mulberry32
-  let t = seed >>> 0;
-  return function(){
-    t += 0x6D2B79F5;
-    let r = Math.imul(t ^ t >>> 15, 1 | t);
-    r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
-    return ((r ^ r >>> 14) >>> 0) / 4294967296;
-  };
-}
-function randn01(rand=Math.random){
-  // Box–Muller transform
-  let u=0,v=0; while(u===0) u=rand(); while(v===0) v=rand();
-  return Math.sqrt(-2.0*Math.log(u)) * Math.cos(2*Math.PI*v);
-}
-function runSimulation(S0, dailyPct, minutes, seed){
-  const rows = [];
-  const rand = (seed!==null && !Number.isNaN(seed)) ? seededRandom(Number(seed)) : Math.random;
-  // Rough minute volatility from daily range (heuristic)
-  const dailyStd = (dailyPct/100) / 2.8;          // convert range% -> ~stdev%
-  const minStd   = dailyStd / Math.sqrt(390);     // per-minute (assume 390 mins in day)
-  let s = S0;
-  for(let i=1;i<=minutes;i++){
-    const z = randn01(rand);
-    const ret = z * minStd;                       // small log-return
-    s = s * (1 + ret);
-    rows.push({ i, price:s, delta: (i===1? 0 : s - rows[rows.length-1].price) });
+/* ========= SIMPLE SIMULATOR ========= */
+/* Pure compute functions per rule (no DOM side-effects) */
+const compute = {
+  Umbrella: (H,L)=> {
+    const range = H - L;
+    const x = range * 0.2611;
+    return {
+      'Range (High - Low)': range,
+      '"X" (Range * 26.11%)': x,
+      'High - "X"': H - x,
+      'Low + "X"': L + x
+    };
+  },
+  Bike: (H,L)=> {
+    const x = Math.sqrt(H);
+    const dx = x * 0.2611;
+    const y = Math.sqrt(L);
+    const dy = y * 0.2611;
+    return {
+      'SQRT(High) "X"': x,
+      'Ding Ding (from "X")': dx,
+      'High + Ding Ding': H + dx,
+      'SQRT(Low) "Y"': y,
+      'Ding Ding (from "Y")': dy,
+      'Low - Ding Ding': L - dy
+    };
+  },
+  Rikshaw: (H,L)=> {
+    return {
+      'High + 0.2611%': H * (1 + 0.002611),
+      'High + 0.1306%': H * (1 + 0.001306),
+      'Low - 0.2611%':  L * (1 - 0.002611),
+      'Low - 0.1306%':  L * (1 - 0.001306)
+    };
+  },
+  Car: (H,L)=> {
+    const mid = (H+L)/2;
+    return {
+      'Midpoint (High + Low) / 2': mid,
+      '1.5% Above Midpoint': mid * 1.015,
+      '1.5% Below Midpoint': mid * 0.985
+    };
+  },
+  Pandavas: (h1,l1,c1,h2,l2,c2)=> {
+    const a1 = (h1+l1+c1)/3;
+    const a2 = (h2+l2+c2)/3;
+    return {
+      'Average 1 (Pivot)': a1,
+      'Average 2 (Pivot)': a2
+    };
   }
-  return rows;
+};
+
+function pctDelta(newVal, oldVal){
+  if(!isFinite(newVal) || !isFinite(oldVal) || oldVal === 0) return '—';
+  const d = ((newVal - oldVal)/Math.abs(oldVal))*100;
+  const s = (d>=0?'+':'') + d.toFixed(2) + '%';
+  return s;
+}
+
+function openSimulator(){
+  const key = state.active;
+  if(!rules[key]){ toast('Open a calculator tab first', false); return; }
+
+  // Take current inputs from the live form (if filled)
+  const currentInputs = {};
+  if(key==='Pandavas'){
+    ['pandavas-first-high','pandavas-first-low','pandavas-first-close','pandavas-second-high','pandavas-second-low','pandavas-second-close']
+      .forEach(id => currentInputs[id] = parseFloat($('#'+id)?.value));
+  } else {
+    rules[key].inputs.forEach(([,id])=> currentInputs[id] = parseFloat($('#'+id)?.value));
+  }
+
+  // Get current results (for delta comparison)
+  const cur = rules[key].calc?.() || {results:{}};
+  const currentResults = cur.results || {};
+
+  // Build dialog body (inputs + results preview)
+  const sim = $('#simBody');
+  if(key==='Pandavas'){
+    sim.innerHTML = `
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">1st Half High</label>
+            <input id="sim-fh" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-first-high'])?currentInputs['pandavas-first-high']:''}">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">1st Half Low</label>
+            <input id="sim-fl" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-first-low'])?currentInputs['pandavas-first-low']:''}">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">1st Half Close</label>
+            <input id="sim-fc" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-first-close'])?currentInputs['pandavas-first-close']:''}">
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">2nd Half High</label>
+            <input id="sim-sh" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-second-high'])?currentInputs['pandavas-second-high']:''}">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">2nd Half Low</label>
+            <input id="sim-sl" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-second-low'])?currentInputs['pandavas-second-low']:''}">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">2nd Half Close</label>
+            <input id="sim-sc" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs['pandavas-second-close'])?currentInputs['pandavas-second-close']:''}">
+          </div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <h3 class="text-sm font-extrabold mb-1">Results</h3>
+        <div id="simResults" class="grid md:grid-cols-2 gap-2 text-sm"></div>
+      </div>
+    `;
+  } else {
+    const [i1,i2] = (rules[key].inputs||[]).map(x=>x[0]);
+    const [id1,id2] = (rules[key].inputs||[]).map(x=>x[1]);
+    sim.innerHTML = `
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1">${i1||'Input 1'}</label>
+          <input id="sim-a" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs[id1])?currentInputs[id1]:''}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">${i2||'Input 2'}</label>
+          <input id="sim-b" type="number" step="0.01" class="w-full rounded-lg border px-3 py-2 text-sm" value="${isFinite(currentInputs[id2])?currentInputs[id2]:''}">
+        </div>
+      </div>
+      <div class="mt-2">
+        <h3 class="text-sm font-extrabold mb-1">Results</h3>
+        <div id="simResults" class="grid md:grid-cols-2 gap-2 text-sm"></div>
+      </div>
+    `;
+  }
+
+  // Clear previous results
+  $('#simResults').innerHTML = '';
+  $('#simulateModal').showModal();
+
+  // Wire Run button
+  $('#simRun').onclick = () => {
+    let out = {};
+    if(key==='Umbrella'){
+      const H = parseFloat($('#sim-a').value), L = parseFloat($('#sim-b').value);
+      if(!isFinite(H)||!isFinite(L)) return toast('Enter both inputs', false);
+      out = compute.Umbrella(H,L);
+    } else if(key==='Bike'){
+      const H = parseFloat($('#sim-a').value), L = parseFloat($('#sim-b').value);
+      if(!isFinite(H)||!isFinite(L) || H<0 || L<0) return toast('Enter non-negative inputs', false);
+      out = compute.Bike(H,L);
+    } else if(key==='Rikshaw'){
+      const H = parseFloat($('#sim-a').value), L = parseFloat($('#sim-b').value);
+      if(!isFinite(H)||!isFinite(L)) return toast('Enter both inputs', false);
+      out = compute.Rikshaw(H,L);
+    } else if(key==='Car'){
+      const H = parseFloat($('#sim-a').value), L = parseFloat($('#sim-b').value);
+      if(!isFinite(H)||!isFinite(L)) return toast('Enter both inputs', false);
+      out = compute.Car(H,L);
+    } else if(key==='Pandavas'){
+      const fh = parseFloat($('#sim-fh').value),
+            fl = parseFloat($('#sim-fl').value),
+            fc = parseFloat($('#sim-fc').value),
+            sh = parseFloat($('#sim-sh').value),
+            sl = parseFloat($('#sim-sl').value),
+            sc = parseFloat($('#sim-sc').value);
+      if([fh,fl,fc,sh,sl,sc].some(v=>!isFinite(v))) return toast('Fill all six values', false);
+      out = compute.Pandavas(fh,fl,fc,sh,sl,sc);
+    }
+
+    // Render results with delta vs current
+    const container = $('#simResults');
+    container.innerHTML = '';
+    Object.entries(out).forEach(([label,val])=>{
+      // find closest current result by label key used on live UI map
+      const curVal = currentResults[label] ?? NaN;
+      const delta = pctDelta(Number(val), Number(curVal));
+      const row = document.createElement('div');
+      row.className = 'rounded-lg border px-3 py-2 flex items-center justify-between';
+      row.innerHTML = `
+        <span class="font-medium">${label}</span>
+        <span class="text-right">
+          <b>${fmt(val)}</b>
+          <span class="ml-2 text-xs opacity-70">${delta}</span>
+        </span>
+      `;
+      container.appendChild(row);
+    });
+  };
 }
 
 /* ========= Init ========= */
 (function init(){
   applyTheme(store.theme);
   setDailyQuote();
-  setActiveTab('Umbrella');
+  setActiveTab('Umbrella');      // default render + handlers
   $('#analyzeBtn').addEventListener('click', analyze);
   renderQuickLinks();
 
-  // Simulate button + modal handlers
-  $('#simulateBtn').addEventListener('click', ()=> {
-    // default values
-    $('#simStart').value = $('#simStart').value || 100;
-    $('#simRange').value = $('#simRange').value || 1.0;
-    $('#simMinutes').value = $('#simMinutes').value || 60;
-    $('#simulateModal').showModal();
-  });
-  document.querySelectorAll('#simulateModal [data-close]').forEach(b=> b.addEventListener('click', ()=> $('#simulateModal').close()));
-  $('#clearSim').addEventListener('click', ()=>{
-    $('#simBody').innerHTML = '<tr><td class="px-2 py-2 opacity-60" colspan="3">No simulation yet.</td></tr>';
-    $('#simSummary').textContent = '';
-  });
-  $('#runSim').addEventListener('click', ()=>{
-    const S0 = parseFloat($('#simStart').value);
-    const R  = parseFloat($('#simRange').value);
-    const M  = parseInt($('#simMinutes').value,10);
-    const seedStr = ($('#simSeed').value||'').trim();
-    const seed = seedStr==='' ? null : Number(seedStr);
-    if(!isFinite(S0) || !isFinite(R) || !isFinite(M) || M<=0){ toast('Enter valid simulation inputs', false); return; }
-    const rows = runSimulation(S0, R, M, seed);
-    const tbody = rows.map(r=>`
-      <tr>
-        <td class="px-2 py-1 border">${r.i}</td>
-        <td class="px-2 py-1 border">${fmt(r.price)}</td>
-        <td class="px-2 py-1 border">${fmt(r.delta)}</td>
-      </tr>`).join('');
-    $('#simBody').innerHTML = tbody;
-    const prices = rows.map(r=>r.price);
-    const p0 = S0, pN = prices[prices.length-1];
-    const maxP = Math.max(...prices), minP = Math.min(...prices);
-    const retPct = ((pN - p0)/p0)*100;
-    $('#simSummary').textContent =
-      `End: ${fmt(pN)}  •  Change: ${fmt(pN-p0)} (${fmt(retPct)}%)  •  High: ${fmt(maxP)}  •  Low: ${fmt(minP)}`;
+  // Simulate open + dialog close
+  $('#simulateBtn').addEventListener('click', openSimulator);
+  document.querySelectorAll('#simulateModal [data-close]')?.forEach(b=>{
+    b.addEventListener('click', ()=> $('#simulateModal').close());
   });
 })();
 </script>
