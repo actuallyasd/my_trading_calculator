@@ -4,6 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Trading Rules Calculator</title>
+
+<!-- Favicon (calculator) -->
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" ry="12" fill="%235b6bfa"/><rect x="14" y="10" width="36" height="12" rx="3" fill="white" opacity=".95"/><rect x="14" y="26" width="36" height="28" rx="6" fill="white" opacity=".95"/><g fill="%235b6bfa"><circle cx="22" cy="34" r="3"/><circle cx="32" cy="34" r="3"/><circle cx="42" cy="34" r="3"/><circle cx="22" cy="42" r="3"/><circle cx="32" cy="42" r="3"/><rect x="39" y="39" width="6" height="12" rx="2"/></g></svg>' />
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
@@ -145,9 +149,11 @@
         <button id="shareTelegram" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold hover:brightness-110"><i class="fab fa-telegram-plane mr-2"></i>Telegram</button>
         <button id="copyLink" class="px-4 py-2 rounded-full bg-gray-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-copy mr-2"></i>Copy Link</button>
         <button id="refBtn" class="px-4 py-2 rounded-full bg-emerald-600 text-white font-semibold hover:brightness-110"><i class="fa-regular fa-image mr-2"></i>Upload Reference</button>
-        <button id="viewRef" class="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:brightness-110 hidden"><i class="fa-regular fa-eye mr-2"></i>View Reference</button>
+        <!-- Removed: Reference Preview / View button -->
         <button id="analyzeBtn" class="px-4 py-2 rounded-full bg-fuchsia-600 text-white font-semibold hover:brightness-110"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Analyze</button>
       </div>
+      <!-- Hidden file input (since preview is removed, just upload + store) -->
+      <input id="refFile" type="file" accept="image/*" class="hidden" />
     </div>
 
     <!-- Persistent quote line -->
@@ -169,7 +175,7 @@
       <ul class="space-y-2 text-sm opacity-90">
         <li>• Tabs = different rules. Enter numbers; results update instantly.</li>
         <li>• Save Calculation adds to History. Export/Copy CSV is correctly quoted.</li>
-        <li>• Notes save locally. Reference lets you upload a local image for quick viewing.</li>
+        <li>• Notes save locally. Reference lets you upload a local image for quick saving (no preview).</li>
         <li>• “Analyze” runs offline summary by default; API option is user-controlled.</li>
       </ul>
     </div>
@@ -201,25 +207,7 @@
     </div>
   </dialog>
 
-  <!-- Reference Viewer -->
-  <dialog id="refModal" class="backdrop:bg-black/50 rounded-2xl p-0 w-[min(680px,95vw)]">
-    <div class="p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-extrabold">Reference Image</h2>
-        <button data-close class="h-8 w-8 rounded-full hover:bg-black/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3">
-        <input id="refFile" type="file" accept="image/*" class="w-full rounded-lg border px-3 py-2 text-sm" />
-        <div class="rounded-xl overflow-hidden border">
-          <img id="refPreview" alt="Reference preview" class="w-full max-h-[70vh] object-contain bg-black/5 dark:bg-white/5">
-        </div>
-      </div>
-      <div class="flex justify-between">
-        <button id="clearRef" class="px-4 py-2 rounded-lg bg-rose-600 text-white">Clear</button>
-        <button data-close class="px-4 py-2 rounded-lg border">Close</button>
-      </div>
-    </div>
-  </dialog>
+  <!-- Reference Viewer was removed per request -->
 
 <script>
 /* ========= State & Storage ========= */
@@ -677,36 +665,17 @@ $('#tabs').addEventListener('click', (e)=>{
   setActiveTab(btn.dataset.sheet);
 });
 
-/* ========= Reference upload/view ========= */
-$('#refBtn').addEventListener('click', ()=> {
-  $('#refPreview').src = store.refBlob || '';
-  $('#refModal').showModal();
-});
+/* ========= Reference upload (preview removed) ========= */
+$('#refBtn').addEventListener('click', ()=> $('#refFile').click());
 $('#refFile').addEventListener('change', (e)=>{
   const file = e.target.files?.[0];
   if(!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const dataUrl = reader.result;
-    store.refBlob = dataUrl;
-    $('#refPreview').src = dataUrl;
-    $('#viewRef').classList.toggle('hidden', !store.refBlob);
+    store.refBlob = reader.result;
     toast('Reference saved');
   };
   reader.readAsDataURL(file);
-});
-$('#viewRef').addEventListener('click', ()=>{
-  if(!store.refBlob){ toast('No reference yet', false); return; }
-  $('#refPreview').src = store.refBlob;
-  $('#refModal').showModal();
-});
-$('#clearRef').addEventListener('click', ()=>{
-  if(confirm('Remove reference image?')){
-    store.refBlob = '';
-    $('#refPreview').src = '';
-    $('#viewRef').classList.add('hidden');
-    toast('Reference cleared');
-  }
 });
 
 /* ========= Init ========= */
@@ -714,7 +683,6 @@ $('#clearRef').addEventListener('click', ()=>{
   applyTheme(store.theme);
   setDailyQuote();
   setActiveTab('Umbrella');      // default render + handlers
-  $('#viewRef').classList.toggle('hidden', !store.refBlob);
   $('#analyzeBtn').addEventListener('click', analyze);
 })();
 </script>
